@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.16)
+project(Lab1)
+
+add_subdirectory(Matrix)
+add_subdirectory(Dialogue)
+add_subdirectory(Tests)
