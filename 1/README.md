@@ -16,14 +16,14 @@ git clone https://git.dozen.mephi.ru/oop2025/s24501_chesnokov.an.git
 cd s24501_chesnokov.an
 mkdir build
 cd build
-cmake .. // Эта команда сгенерирует make-файлы для каждой цели в нашем проекте внутри папки build. Сам проект при этом лежит на одну папку выше.
+cmake ..  // Эта команда сгенерирует make-файлы для каждой цели в нашем проекте внутри папки build.
+          // Сам проект при этом лежит на одну папку выше.
 make Dialogue  // Скомпилирует программу Dialogue
 make Tests     // Скомпилирует программу Tests
 make Matrix    // Скомпилирует библиотеку Matrix
 ```
 
 3. Запуск:
-- Запустить реализацию:
 ```bash
 ./build/Dialogue/Dialogue  // Запустит программу Dialogue
 ./build/Tests/Tests        // Запустит программу Tests
