@@ -12,6 +12,12 @@ private:
 public:
     Matrix() = default;
     Matrix(T value);
+    Matrix(T* begin, T* end);
+    Matrix(std::initializer_list<std::initializer_list<T>> list);
+    Matrix& operator=(Matrix other);
+    size_t get_col() const;
+    size_t get_row() const;
+    size_t get_size() const;
 };
 
 #endif
