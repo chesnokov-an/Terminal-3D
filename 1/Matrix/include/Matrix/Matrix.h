@@ -14,10 +14,24 @@ public:
     Matrix(T value);
     Matrix(T* begin, T* end);
     Matrix(std::initializer_list<std::initializer_list<T>> list);
-    Matrix& operator=(Matrix other);
+    Matrix& operator=(const Matrix& other) = default;
+    Matrix& operator=(std::initializer_list<std::initializer_list<T>> list);
     size_t get_col() const;
     size_t get_row() const;
     size_t get_size() const;
+    T& at(size_t i, size_t j);
+    const T& at(size_t i, size_t j) const;
+
+public:
+    using iterator = T**;
+    iterator begin() const;
+    iterator end() const;
+    iterator cbegin() const;
+    iterator cend() const;
+    iterator rbegin() const;
+    iterator rend() const;
+    iterator crbegin() const;
+    iterator crend() const;
 };
 
 #endif
