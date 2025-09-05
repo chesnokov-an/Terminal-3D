@@ -42,6 +42,12 @@ const std::reverse_iterator<T*> Matrix<T, col_size_, row_size_>::crend() const{
     return std::reverse_iterator<T*>(begin());
 }
 
+template <Numeric T, size_t col_size_, size_t row_size_>
+std::pair<T*, T*> Matrix<T, col_size_, row_size_>::row_iters(size_t i){
+    iterator start = begin() + (i - (i % row_size_));
+    return std::reverse_iterator<T*>(start, start + row_size_);
+}
+
 /*----------------CONSTRUCTORS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>::Matrix(T value){

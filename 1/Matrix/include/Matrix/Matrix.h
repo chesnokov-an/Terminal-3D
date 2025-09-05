@@ -20,6 +20,8 @@ public:
     const std::reverse_iterator<T*> crbegin() const;
     const std::reverse_iterator<T*> crend() const;
 
+    std::pair<T*, T*> row_iters(size_t i);
+
 public:
     Matrix() = default;
     Matrix(T value);
