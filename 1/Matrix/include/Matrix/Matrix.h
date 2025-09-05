@@ -30,6 +30,7 @@ public:
 
 public:
     Matrix() = default;
+    Matrix(const Matrix& other) = default;
     Matrix(T value);
     Matrix(iterator begin, iterator end);
     Matrix(std::initializer_list<std::initializer_list<T>> init);
@@ -47,7 +48,7 @@ public:
 
     void set(size_t i, size_t j, T value);
 
-    Matrix& get_transposed() const;
+    Matrix& transposed() const;
 
 };
 

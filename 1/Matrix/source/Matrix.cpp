@@ -151,14 +151,10 @@ void Matrix<T, col_size_, row_size_>::set(size_t i, size_t j, T value){
 
 /*----------------MAIN FUNCTIONS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>& Matrix<T, col_size_, row_size_>::get_transposed() const{
+Matrix<T, col_size_, row_size_>& Matrix<T, col_size_, row_size_>::transposed() const{
     Matrix<T, col_size_, row_size_> result;
-    for(int i = 0; i < col_size_; i++){
-        for(int j = 0; j < row_size_; j++){
-            result.set(j, i, matrix_[i][j]);
-        }
-    }
-    std::transform(begin(), end(), result.begin(), [](iterator it){});
+    std::copy(begin(), end(), result.col_begin());
+    return result;
 }
 
 /*----------------COL ITERATOR----------------*/
