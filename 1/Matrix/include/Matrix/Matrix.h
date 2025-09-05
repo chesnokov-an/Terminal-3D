@@ -4,6 +4,9 @@
 template <typename T>
 concept Numeric = std::is_integral_v<T> || std::is_floating_point_v<T>;
 
+template <Numeric T>
+class Col_iterator;
+
 template <Numeric T, size_t col_size_, size_t row_size_>
 class Matrix{
 private:
@@ -21,6 +24,9 @@ public:
     const std::reverse_iterator<T*> crend() const;
 
     std::pair<T*, T*> row_iters(size_t i);
+
+    Col_iterator<T> col_begin(size_t j);
+    Col_iterator<T> col_end(size_t j);
 
 public:
     Matrix() = default;
@@ -50,5 +56,18 @@ Matrix<T, col_size_, row_size_> operator+(const Matrix<T, col_size_, row_size_>&
 
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_> operator-(const Matrix<T, col_size_, row_size_>& a, const Matrix<T, col_size_, row_size_>& b);
+
+template <Numeric T>
+class Сol_iterator{
+private:
+    Matrix* matrix_ = nullptr;
+    T* ptr = nullptr;
+
+public:
+    Сol_iterator() = delete;
+    Сol_iterator(Matrix* matrix, size_t j) : matrix_(matrix), ptr(&(matrix_->at(0, j))){}
+    
+
+};
 
 #endif

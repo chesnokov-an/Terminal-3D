@@ -1,5 +1,6 @@
 #include <iostream>
 #include <Matrix/Matrix.h>
+#include "Matrix.h"
 
 /*----------------ITERATORS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
@@ -46,6 +47,18 @@ template <Numeric T, size_t col_size_, size_t row_size_>
 std::pair<T*, T*> Matrix<T, col_size_, row_size_>::row_iters(size_t i){
     iterator start = begin() + (i - (i % row_size_));
     return std::reverse_iterator<T*>(start, start + row_size_);
+}
+
+template <Numeric T, size_t col_size_, size_t row_size_>
+Col_iterator<T> Matrix<T, col_size_, row_size_>::col_begin(size_t j){
+    Col_iterator<T> cil_it{this, j};
+    return cil_it;
+}
+
+template <Numeric T, size_t col_size_, size_t row_size_>
+Col_iterator<T> Matrix<T, col_size_, row_size_>::col_end(size_t j){
+    Col_iterator<T> cil_it{this, j};
+    return cil_it + row_size_;
 }
 
 /*----------------CONSTRUCTORS----------------*/
@@ -147,3 +160,10 @@ Matrix<T, col_size_, row_size_>& Matrix<T, col_size_, row_size_>::get_transposed
     }
     std::transform(begin(), end(), result.begin(), [](){});
 }*/
+
+/*----------------COL ITERATOR----------------*/
+/*----------------CONSTRUCTORS----------------*/
+
+
+
+
