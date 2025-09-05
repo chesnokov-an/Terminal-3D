@@ -50,18 +50,26 @@ Matrix<T, col_size_, row_size_>::Matrix(T value){
 
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>::Matrix(iterator begin, iterator end){
-    std::copy(begin, end, matrix_);
+    std::copy(begin, end, this->begin());
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::Matrix(std::initializer_list<std::initializer_list<T>> list){
-    std::copy(list.begin(), list.end(), begin());
+Matrix<T, col_size_, row_size_>::Matrix(std::initializer_list<std::initializer_list<T>> init){
+    iterator it = begin();
+    std::ranges::for_each(init, [](std::initializer_list<T> init_row){
+        std::copy(init_row.begin(), init_row.end(), it); 
+        it += row_size_;
+    })
 }
 
 /*----------------OPERATORS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>& Matrix<T, col_size_, row_size_>::operator=(std::initializer_list<std::initializer_list<T>> list){
-    std::copy(list.begin(), list.end(), begin());
+Matrix<T, col_size_, row_size_>& Matrix<T, col_size_, row_size_>::operator=(std::initializer_list<std::initializer_list<T>> init){
+    iterator it = begin();
+    std::ranges::for_each(init, [](std::initializer_list<T> init_row){
+        std::copy(init_row.begin(), init_row.end(), it); 
+        it += row_size_;
+    })
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>

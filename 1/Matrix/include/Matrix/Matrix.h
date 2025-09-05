@@ -24,10 +24,10 @@ public:
     Matrix() = default;
     Matrix(T value);
     Matrix(iterator begin, iterator end);
-    Matrix(std::initializer_list<std::initializer_list<T>> list);
+    Matrix(std::initializer_list<std::initializer_list<T>> init);
     
     Matrix& operator=(const Matrix& other) = default;
-    Matrix& operator=(std::initializer_list<std::initializer_list<T>> list);
+    Matrix& operator=(std::initializer_list<std::initializer_list<T>> init);
     Matrix& operator+=(const Matrix& other);
     Matrix& operator-=(const Matrix& other);
     
