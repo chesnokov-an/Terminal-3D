@@ -17,32 +17,6 @@ Matrix<T, col_size_, row_size_>::Matrix(std::initializer_list<std::initializer_l
     std::copy(list.begin(), list.end(), begin());
 }
 
-/*----------------GETTERS----------------*/
-template <Numeric T, size_t col_size_, size_t row_size_>
-size_t Matrix<T, col_size_, row_size_>::get_col() const{
-    return col_size_;
-}
-
-template <Numeric T, size_t col_size_, size_t row_size_>
-size_t Matrix<T, col_size_, row_size_>::get_row() const{
-    return row_size_;
-}
-
-template <Numeric T, size_t col_size_, size_t row_size_>
-size_t Matrix<T, col_size_, row_size_>::get_size() const{
-    return col_size_ * row_size_;
-}
-
-template <Numeric T, size_t col_size_, size_t row_size_>
-T& Matrix<T, col_size_, row_size_>::at(size_t i, size_t j){
-    return matrix_[i][j];
-}
-
-template <Numeric T, size_t col_size_, size_t row_size_>
-const T& Matrix<T, col_size_, row_size_>::at(size_t i, size_t j) const{
-    return matrix_[i][j];
-}
-
 /*----------------OPERATORS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>& Matrix<T, col_size_, row_size_>::operator=(std::initializer_list<std::initializer_list<T>> list){
@@ -75,4 +49,28 @@ Matrix<T, col_size_, row_size_> operator-(const Matrix<T, col_size_, row_size_>&
     return result;
 }
 
+/*----------------GETTERS----------------*/
+template <Numeric T, size_t col_size_, size_t row_size_>
+size_t Matrix<T, col_size_, row_size_>::get_col() const{
+    return col_size_;
+}
 
+template <Numeric T, size_t col_size_, size_t row_size_>
+size_t Matrix<T, col_size_, row_size_>::get_row() const{
+    return row_size_;
+}
+
+template <Numeric T, size_t col_size_, size_t row_size_>
+size_t Matrix<T, col_size_, row_size_>::get_size() const{
+    return col_size_ * row_size_;
+}
+
+template <Numeric T, size_t col_size_, size_t row_size_>
+T& Matrix<T, col_size_, row_size_>::at(size_t i, size_t j){
+    return matrix_[i][j];
+}
+
+template <Numeric T, size_t col_size_, size_t row_size_>
+const T& Matrix<T, col_size_, row_size_>::at(size_t i, size_t j) const{
+    return matrix_[i][j];
+}

@@ -9,7 +9,7 @@ class Matrix{
 private:
     T matrix_[col_size_][row_size_]{};
 
-    public:
+public:
     using iterator = T**;
     iterator begin() const;
     iterator end() const;
@@ -20,20 +20,22 @@ private:
     iterator crbegin() const;
     iterator crend() const;
 
-    public:
+public:
     Matrix() = default;
     Matrix(T value);
     Matrix(iterator begin, iterator end);
     Matrix(std::initializer_list<std::initializer_list<T>> list);
+    
+    Matrix& operator=(const Matrix& other) = default;
+    Matrix& operator=(std::initializer_list<std::initializer_list<T>> list);
+    Matrix& operator+=(const Matrix& other);
+    Matrix& operator-=(const Matrix& other);
+    
     size_t get_col() const;
     size_t get_row() const;
     size_t get_size() const;
     T& at(size_t i, size_t j);
     const T& at(size_t i, size_t j) const;
-    Matrix& operator=(const Matrix& other) = default;
-    Matrix& operator=(std::initializer_list<std::initializer_list<T>> list);
-    Matrix& operator+=(const Matrix& other);
-    Matrix& operator-=(const Matrix& other);
 
 };
 
