@@ -4,17 +4,17 @@
 /*----------------CONSTRUCTORS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>::Matrix(T value){
-    std::fill(matrix_, matrix_ + col_size_ * row_size_, value);
+    std::fill(begin(), end(), value);
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::Matrix(T* begin, T* end){
+Matrix<T, col_size_, row_size_>::Matrix(iterator begin, iterator end){
     std::copy(begin, end, matrix_);
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>::Matrix(std::initializer_list<std::initializer_list<T>> list){
-    std::copy(list.begin(), list.end(), matrix_);
+    std::copy(list.begin(), list.end(), begin());
 }
 
 /*----------------GETTERS----------------*/
@@ -44,20 +44,20 @@ const T& Matrix<T, col_size_, row_size_>::at(size_t i, size_t j) const{
 }
 
 /*----------------OPERATORS----------------*/
-/*template <Numeric T, size_t col_size_, size_t row_size_>
+template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>& Matrix<T, col_size_, row_size_>::operator=(std::initializer_list<std::initializer_list<T>> list){
-    std::copy(list.begin(), list.end(), matrix_);
-}*/
+    std::copy(list.begin(), list.end(), begin());
+}
 
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>& Matrix<T, col_size_, row_size_>::operator+=(const Matrix& other){
-    std::transform((*this).begin(), (*this).end(), other.begin(), (*this).begin(), std::plus<T>());
+    std::transform(begin(), end(), other.begin(), begin(), std::plus<T>());
     return *this;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>& Matrix<T, col_size_, row_size_>::operator-=(const Matrix& other){
-    std::transform((*this).begin(), (*this).end(), other.begin(), (*this).begin(), std::minus<T>());
+    std::transform(begin(), end(), other.begin(), begin(), std::minus<T>());
     return *this;
 }
 
@@ -74,4 +74,5 @@ Matrix<T, col_size_, row_size_> operator-(const Matrix<T, col_size_, row_size_>&
     result -= b;
     return result;
 }
+
 
