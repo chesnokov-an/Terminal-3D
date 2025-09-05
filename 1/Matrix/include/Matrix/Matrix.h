@@ -76,8 +76,8 @@ public:
     Сol_iterator& operator--();
     Сol_iterator operator--(int);
     Сol_iterator& operator=(const Сol_iterator& other) & = default;
-    Сol_iterator& operator+=(const T n);
-    Сol_iterator& operator-=(const T n);
+    Сol_iterator& operator+=(const size_t n);
+    Сol_iterator& operator-=(const size_t n);
     bool operator==(const Сol_iterator& other) const;
     bool operator!=(const Сol_iterator& other) const;
     bool operator>(const Сol_iterator& other) const;
