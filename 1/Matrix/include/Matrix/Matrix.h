@@ -10,15 +10,15 @@ private:
     T matrix_[col_size_][row_size_]{};
 
 public:
-    using iterator = T**;
-    iterator begin() const;
-    iterator end() const;
-    iterator cbegin() const;
-    iterator cend() const;
-    iterator rbegin() const;
-    iterator rend() const;
-    iterator crbegin() const;
-    iterator crend() const;
+    using iterator = T*;
+    iterator begin();
+    iterator end();
+    const iterator cbegin() const;
+    const iterator cend() const;
+    std::reverse_iterator<T*> rbegin();
+    std::reverse_iterator<T*> rend();
+    const std::reverse_iterator<T*> crbegin() const;
+    const std::reverse_iterator<T*> crend() const;
 
 public:
     Matrix() = default;
@@ -36,6 +36,10 @@ public:
     size_t get_size() const;
     T& at(size_t i, size_t j);
     const T& at(size_t i, size_t j) const;
+
+    void set(size_t i, size_t j, T value);
+
+    Matrix& get_transposed() const;
 
 };
 
