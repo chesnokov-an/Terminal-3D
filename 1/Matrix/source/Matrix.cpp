@@ -44,21 +44,25 @@ const std::reverse_iterator<T*> Matrix<T, col_size_, row_size_>::crend() const{
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-std::pair<T*, T*> Matrix<T, col_size_, row_size_>::row_iters(size_t i){
-    iterator start = begin() + (i - (i % row_size_));
-    return std::reverse_iterator<T*>(start, start + row_size_);
+Col_iterator<T> Matrix<T, col_size_, row_size_>::col_begin(){
+    Col_iterator<T> col_it{this, begin()};
+    return col_it{this, begin()};
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Col_iterator<T> Matrix<T, col_size_, row_size_>::col_begin(size_t j){
-    Col_iterator<T> col_it{this, matrix_ + j};
+Col_iterator<T> Matrix<T, col_size_, row_size_>::col_end(){
+    Col_iterator<T> col_it{this, begin() + col_size_ * row_size_};
     return col_it;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Col_iterator<T> Matrix<T, col_size_, row_size_>::col_end(size_t j){
-    Col_iterator<T> col_it{this, matrix_ + j};
-    return col_it + row_size_;
+std::pair<T*, T*> Matrix<T, col_size_, row_size_>::row_iters(size_t i){
+    return std::pair<T*, T*>(begin() + i * row_size_, begin() + (i + 1) * row_size_);
+}
+
+template <Numeric T, size_t col_size_, size_t row_size_>
+std::pair<Col_iterator<T>, Col_iterator<T>> Matrix<T, col_size_, row_size_>::col_iters(size_t j){
+    return std::pair<Col_iterator<T>, Col_iterator<T>>(col_begin() + j * col_size_, col_begin() + (j + 1) * col_size_);
 }
 
 /*----------------CONSTRUCTORS----------------*/

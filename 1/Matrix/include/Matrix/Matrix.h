@@ -23,10 +23,11 @@ public:
     const std::reverse_iterator<T*> crbegin() const;
     const std::reverse_iterator<T*> crend() const;
 
-    std::pair<T*, T*> row_iters(size_t i);
+    Col_iterator<T> col_begin();
+    Col_iterator<T> col_end();
 
-    Col_iterator<T> col_begin(size_t j);
-    Col_iterator<T> col_end(size_t j);
+    std::pair<T*, T*> row_iters(size_t i);
+    std::pair<Col_iterator<T>, Col_iterator<T>> col_iters(size_t j);
 
 public:
     Matrix() = default;
