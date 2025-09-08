@@ -55,8 +55,8 @@ public:
     Matrix& operator+=(const Matrix& other);
     Matrix& operator-=(const Matrix& other);
 
-    T& operator[](size_t i, size_t j);
-    T operator[](size_t i, size_t j) const;
+    T& operator()(size_t i, size_t j);
+    T operator()(size_t i, size_t j) const;
     
     size_t get_col_size() const;
     size_t get_row_size() const;
@@ -72,7 +72,7 @@ public:
         using difference_type = std::ptrdiff_t;
         ColumnIterator() = delete;
         ColumnIterator(const ColumnIterator& other) = default;
-        ColumnIterator(T* ptr) : matrix_(matrix), ptr_(ptr){}
+        ColumnIterator(T* ptr) : ptr_(ptr){}
 
         ColumnIterator& operator++();
         ColumnIterator operator++(int);
@@ -82,19 +82,13 @@ public:
         ColumnIterator& operator+=(const size_t n);
         ColumnIterator& operator-=(const size_t n);
         bool operator==(const ColumnIterator& other) const = default;
-        std::strong_ordering operator<=>(const ColumnIterator& other) const  { return ptr_ <=> other.ptr_};
+        std::strong_ordering operator<=>(const ColumnIterator& other) const  { return ptr_ <=> other.ptr_; };
 
         T& operator[](size_t index) const;
     };
 
     static_assert(std::random_access_iterator<iterator>);
     static_assert(std::random_access_iterator<const_iterator>);
-
-
-    ColumnIterator operator+(ColumnIterator it, const T n);
-    ColumnIterator operator+(const T n, ColumnIterator it);
-    ColumnIterator operator-(ColumnIterator it, const T n);
-    ColumnIterator operator-(const T n, ColumnIterator it);
 };
 
 // std::iterator_traits<int*>::
@@ -107,6 +101,17 @@ Matrix<T, col_size_, row_size_> operator-(const Matrix<T, col_size_, row_size_>&
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_> operator*(const Matrix<T, col_size_, row_size_>& a, const Matrix<T, col_size_, row_size_>& b);
 
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator operator+(typename Matrix<T, col_size_, row_size_>::ColumnIterator it, const T n);
+
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator operator+(const T n, typename Matrix<T, col_size_, row_size_>::ColumnIterator it);
+
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator operator-(typename Matrix<T, col_size_, row_size_>::ColumnIterator it, const T n);
+
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator operator-(const T n, typename Matrix<T, col_size_, row_size_>::ColumnIterator it);
 
 // static_assert(std::random_access_iterator<int>);
 template <Numeric T, size_t col_size_, size_t row_size_>

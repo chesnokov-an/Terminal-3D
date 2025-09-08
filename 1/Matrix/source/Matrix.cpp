@@ -1,6 +1,6 @@
 #include <iostream>
 #include <Matrix/Matrix.h>
-#include <utility>
+#include <algorithm>
 
 /*----------------ITERATORS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
@@ -66,7 +66,7 @@ Matrix<T, col_size_, row_size_>::const_reverse_iterator Matrix<T, col_size_, row
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>::ColumnIterator Matrix<T, col_size_, row_size_>::col_begin(){
     ColumnIterator col_it{this, begin()};
-    return col_it{this, begin()};
+    return col_it;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
@@ -99,13 +99,13 @@ Matrix<T, col_size_, row_size_>::Matrix(InputIter begin, InputIter end){
 
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>::Matrix(std::initializer_list<T> init){
-    std::copy(init_row.begin(), init_row.end(), begin());
+    std::copy(init.begin(), init.end(), begin());
 }
 
 /*----------------OPERATORS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>& Matrix<T, col_size_, row_size_>::operator=(std::initializer_list<T> init){
-    std::copy(init_row.begin(), init_row.end(), begin());
+    std::copy(init.begin(), init.end(), begin());
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
@@ -121,12 +121,12 @@ Matrix<T, col_size_, row_size_>& Matrix<T, col_size_, row_size_>::operator-=(con
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-T& Matrix<T, col_size_, row_size_>::operator[](size_t i, size_t j){
+T& Matrix<T, col_size_, row_size_>::operator()(size_t i, size_t j){
     return matrix_[i][j];
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-T Matrix<T, col_size_, row_size_>::operator[](size_t i, size_t j) const{
+T Matrix<T, col_size_, row_size_>::operator()(size_t i, size_t j) const{
     return matrix_[i][j];
 }
 
@@ -173,8 +173,8 @@ Matrix<T, col_size_, row_size_> Matrix<T, col_size_, row_size_>::transposed() co
 /*----------------COL ITERATOR----------------*/
 /*----------------OPERATORS----------------*/
 
-template <Numeric T>
-ColumnIterator& ColumnIterator::operator++(){
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator& Matrix<T, col_size_, row_size_>::ColumnIterator::operator++(){
     ptr_ += matrix_->get_row();
     if(ptr_ >= matrix_->end() + matrix_->get_row() - 1){
         ptr_ = matrix_->end();
@@ -185,9 +185,9 @@ ColumnIterator& ColumnIterator::operator++(){
     return *this;
 }
 
-template <Numeric T>
-ColumnIterator ColumnIterator::operator++(int){
-    ColumnIterator tmp{matrix_, ptr_}
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator Matrix<T, col_size_, row_size_>::ColumnIterator::operator++(int){
+    ColumnIterator tmp{ptr_};
     ptr_ += matrix_->get_row();
     if(ptr_ >= matrix_->end() + matrix_->get_row() - 1){
         ptr_ = matrix_->end();
@@ -198,8 +198,8 @@ ColumnIterator ColumnIterator::operator++(int){
     return tmp;
 }
 
-template <Numeric T>
-ColumnIterator& ColumnIterator::operator--(){
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator& Matrix<T, col_size_, row_size_>::ColumnIterator::operator--(){
     ptr_ -= matrix_->get_row();
     if(ptr_ < matrix_->begin()){
         ptr_ += matrix_->get_size();
@@ -207,9 +207,9 @@ ColumnIterator& ColumnIterator::operator--(){
     return *this;
 }
 
-template <Numeric T>
-ColumnIterator ColumnIterator::operator--(int){
-    ColumnIterator tmp{matrix_, ptr_}
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator Matrix<T, col_size_, row_size_>::ColumnIterator::operator--(int){
+    ColumnIterator tmp{matrix_, ptr_};
     ptr_ -= matrix_->get_row();
     if(ptr_ < matrix_->begin()){
         ptr_ += matrix_->get_size();
@@ -217,8 +217,8 @@ ColumnIterator ColumnIterator::operator--(int){
     return tmp;
 }
 
-template <Numeric T>
-ColumnIterator& ColumnIterator::operator+=(const size_t n){
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator& Matrix<T, col_size_, row_size_>::ColumnIterator::operator+=(const size_t n){
     size_t count = n / matrix_->get_col();
     ptr_ += count + (n % matrix_->get_col()) * matrix_->get_row();
     if(ptr_ >= matrix_->end() + matrix_->get_row() - 1){
@@ -230,12 +230,12 @@ ColumnIterator& ColumnIterator::operator+=(const size_t n){
     return *this;
 }
 
-template <Numeric T>
-ColumnIterator& ColumnIterator::operator-=(const size_t n){
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator& Matrix<T, col_size_, row_size_>::ColumnIterator::operator-=(const size_t n){
     size_t count = n / matrix_->get_col();
     ptr_ -= count + (n % matrix_->get_col()) * matrix_->get_row();
     if((ptr_ == matrix_->begin()) || (ptr_ <= matrix_->begin() - matrix_->get_row())){
-        ptr_ = matrix_->begin()
+        ptr_ = matrix_->begin();
     }
     else if(ptr_ < matrix_->begin()){
         ptr_ += matrix_->get_size();
@@ -243,65 +243,35 @@ ColumnIterator& ColumnIterator::operator-=(const size_t n){
     return *this;
 }
 
-template <Numeric T>
-ColumnIterator operator+(ColumnIterator it, const T n){
-    ColumnIterator result = it;
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator operator+(typename Matrix<T, col_size_, row_size_>::ColumnIterator it, const T n){
+    typename Matrix<T, col_size_, row_size_>::ColumnIterator result = it;
     result += n;
     return result;
 }
 
-template <Numeric T>
-ColumnIterator operator+(const T n, ColumnIterator it){
-    ColumnIterator result = it;
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator operator+(const T n, typename Matrix<T, col_size_, row_size_>::ColumnIterator it){
+    typename Matrix<T, col_size_, row_size_>::ColumnIterator result = it;
     result += n;
     return result;
 }
 
-template <Numeric T>
-ColumnIterator operator-(ColumnIterator it, const T n){
-    ColumnIterator result = it;
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator operator-(typename Matrix<T, col_size_, row_size_>::ColumnIterator it, const T n){
+    typename Matrix<T, col_size_, row_size_>::ColumnIterator result = it;
     result -= n;
     return result;
 }
 
-template <Numeric T>
-ColumnIterator operator-(const T n, ColumnIterator it){
-    ColumnIterator result = it;
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator operator-(const T n, typename Matrix<T, col_size_, row_size_>::ColumnIterator it){
+    typename Matrix<T, col_size_, row_size_>::ColumnIterator result = it;
     result -= n;
     return result;
 }
 
-template <Numeric T>
-bool ColumnIterator::operator==(const ColumnIterator& other) const{
-    return ptr_ == other.ptr_;
-}
-
-template <Numeric T>
-bool ColumnIterator::operator!=(const ColumnIterator& other) const{
-    return ptr_ != other.ptr_;
-}
-
-template <Numeric T>
-bool ColumnIterator::operator>(const ColumnIterator& other) const{
-    return ptr_ > other.ptr_;
-}
-
-template <Numeric T>
-bool ColumnIterator::operator<(const ColumnIterator& other) const{
-    return ptr_ < other.ptr_;
-}
-
-template <Numeric T>
-bool ColumnIterator::operator>=(const ColumnIterator& other) const{
-    return ptr_ >= other.ptr_;
-}
-
-template <Numeric T>
-bool ColumnIterator::operator<=(const ColumnIterator& other) const{
-    return ptr_ >= other.ptr_;
-}
-
-template <Numeric T>
-T& ColumnIterator::operator[](size_t index){
+template <Numeric T, size_t col_size_, size_t row_size_>
+T& Matrix<T, col_size_, row_size_>::ColumnIterator::operator[](size_t index) const{
     return *(ptr_ + index * matrix_->get_row());
 }
