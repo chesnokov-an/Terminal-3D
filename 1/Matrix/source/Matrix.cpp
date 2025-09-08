@@ -1,6 +1,5 @@
 #include <iostream>
 #include <Matrix/Matrix.h>
-#include "Matrix.h"
 
 /*----------------ITERATORS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
@@ -44,14 +43,14 @@ const std::reverse_iterator<T*> Matrix<T, col_size_, row_size_>::crend() const{
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Col_iterator<T> Matrix<T, col_size_, row_size_>::col_begin(){
-    Col_iterator<T> col_it{this, begin()};
+Matrix<T, col_size_, row_size_>::column_iterator Matrix<T, col_size_, row_size_>::col_begin(){
+    column_iterator col_it{this, begin()};
     return col_it{this, begin()};
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Col_iterator<T> Matrix<T, col_size_, row_size_>::col_end(){
-    Col_iterator<T> col_it{this, begin() + col_size_ * row_size_};
+column_iterator Matrix<T, col_size_, row_size_>::col_end(){
+    column_iterator col_it{this, begin() + col_size_ * row_size_};
     return col_it;
 }
 
@@ -61,8 +60,8 @@ std::pair<T*, T*> Matrix<T, col_size_, row_size_>::row_iters(size_t i){
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-std::pair<Col_iterator<T>, Col_iterator<T>> Matrix<T, col_size_, row_size_>::col_iters(size_t j){
-    return std::pair<Col_iterator<T>, Col_iterator<T>>(col_begin() + j * col_size_, col_begin() + (j + 1) * col_size_);
+std::pair<column_iterator, column_iterator> Matrix<T, col_size_, row_size_>::col_iters(size_t j){
+    return std::pair<column_iterator, column_iterator>(col_begin() + j * col_size_, col_begin() + (j + 1) * col_size_);
 }
 
 /*----------------CONSTRUCTORS----------------*/
@@ -165,7 +164,7 @@ Matrix<T, col_size_, row_size_>& Matrix<T, col_size_, row_size_>::transposed() c
 /*----------------OPERATORS----------------*/
 
 template <Numeric T>
-Сol_iterator<T>& Сol_iterator<T>::operator++(){
+column_iterator& column_iterator::operator++(){
     ptr_ += matrix_->get_row();
     if(ptr_ >= matrix_->end() + matrix_->get_row() - 1){
         ptr_ = matrix_->end();
@@ -177,8 +176,8 @@ template <Numeric T>
 }
 
 template <Numeric T>
-Сol_iterator<T> Сol_iterator<T>::operator++(int){
-    Сol_iterator<T> tmp{matrix_, ptr_}
+column_iterator column_iterator::operator++(int){
+    column_iterator tmp{matrix_, ptr_}
     ptr_ += matrix_->get_row();
     if(ptr_ >= matrix_->end() + matrix_->get_row() - 1){
         ptr_ = matrix_->end();
@@ -190,7 +189,7 @@ template <Numeric T>
 }
 
 template <Numeric T>
-Сol_iterator<T>& Сol_iterator<T>::operator--(){
+column_iterator& column_iterator::operator--(){
     ptr_ -= matrix_->get_row();
     if(ptr_ < matrix_->begin()){
         ptr_ += matrix_->get_size();
@@ -199,8 +198,8 @@ template <Numeric T>
 }
 
 template <Numeric T>
-Сol_iterator<T> Сol_iterator<T>::operator--(int){
-    Сol_iterator<T> tmp{matrix_, ptr_}
+column_iterator column_iterator::operator--(int){
+    column_iterator tmp{matrix_, ptr_}
     ptr_ -= matrix_->get_row();
     if(ptr_ < matrix_->begin()){
         ptr_ += matrix_->get_size();
@@ -209,7 +208,7 @@ template <Numeric T>
 }
 
 template <Numeric T>
-Сol_iterator<T>& Сol_iterator<T>::operator+=(const size_t n){
+column_iterator& column_iterator::operator+=(const size_t n){
     size_t count = n / matrix_->get_col();
     ptr_ += count + (n % matrix_->get_col()) * matrix_->get_row();
     if(ptr_ >= matrix_->end() + matrix_->get_row() - 1){
@@ -222,7 +221,7 @@ template <Numeric T>
 }
 
 template <Numeric T>
-Сol_iterator<T>& Сol_iterator<T>::operator-=(const size_t n){
+column_iterator& column_iterator::operator-=(const size_t n){
     size_t count = n / matrix_->get_col();
     ptr_ -= count + (n % matrix_->get_col()) * matrix_->get_row();
     if((ptr_ == matrix_->begin()) || (ptr_ <= matrix_->begin() - matrix_->get_row())){
@@ -235,64 +234,64 @@ template <Numeric T>
 }
 
 template <Numeric T>
-Сol_iterator<T> operator+(Сol_iterator<T> it, const T n){
-    Сol_iterator<T> result = it;
+column_iterator operator+(column_iterator it, const T n){
+    column_iterator result = it;
     result += n;
     return result;
 }
 
 template <Numeric T>
-Сol_iterator<T> operator+(const T n, Сol_iterator<T> it){
-    Сol_iterator<T> result = it;
+column_iterator operator+(const T n, column_iterator it){
+    column_iterator result = it;
     result += n;
     return result;
 }
 
 template <Numeric T>
-Сol_iterator<T> operator-(Сol_iterator<T> it, const T n){
-    Сol_iterator<T> result = it;
+column_iterator operator-(column_iterator it, const T n){
+    column_iterator result = it;
     result -= n;
     return result;
 }
 
 template <Numeric T>
-Сol_iterator<T> operator-(const T n, Сol_iterator<T> it){
-    Сol_iterator<T> result = it;
+column_iterator operator-(const T n, column_iterator it){
+    column_iterator result = it;
     result -= n;
     return result;
 }
 
 template <Numeric T>
-bool Сol_iterator<T>::operator==(const Сol_iterator<T>& other) const{
+bool column_iterator::operator==(const column_iterator& other) const{
     return ptr_ == other.ptr_;
 }
 
 template <Numeric T>
-bool Сol_iterator<T>::operator!=(const Сol_iterator<T>& other) const{
+bool column_iterator::operator!=(const column_iterator& other) const{
     return ptr_ != other.ptr_;
 }
 
 template <Numeric T>
-bool Сol_iterator<T>::operator>(const Сol_iterator<T>& other) const{
+bool column_iterator::operator>(const column_iterator& other) const{
     return ptr_ > other.ptr_;
 }
 
 template <Numeric T>
-bool Сol_iterator<T>::operator<(const Сol_iterator<T>& other) const{
+bool column_iterator::operator<(const column_iterator& other) const{
     return ptr_ < other.ptr_;
 }
 
 template <Numeric T>
-bool Сol_iterator<T>::operator>=(const Сol_iterator<T>& other) const{
+bool column_iterator::operator>=(const column_iterator& other) const{
     return ptr_ >= other.ptr_;
 }
 
 template <Numeric T>
-bool Сol_iterator<T>::operator<=(const Сol_iterator<T>& other) const{
+bool column_iterator::operator<=(const column_iterator& other) const{
     return ptr_ >= other.ptr_;
 }
 
 template <Numeric T>
-T& Сol_iterator<T>::operator[](size_t index){
+T& column_iterator::operator[](size_t index){
     return *(ptr_ + index * matrix_->get_row());
 }
