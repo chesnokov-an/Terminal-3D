@@ -1,8 +1,11 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
-#include <concepts>
+
 #include <type_traits>
+#include <cstddef>
+#include <utility>
+#include <iterator>
 
 template <typename T>
 concept Numeric = std::is_integral_v<T> || std::is_floating_point_v<T>;
@@ -114,8 +117,6 @@ template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>::ColumnIterator operator-(const T n, typename Matrix<T, col_size_, row_size_>::ColumnIterator it);
 
 // static_assert(std::random_access_iterator<int>);
-template <Numeric T, size_t col_size_, size_t row_size_>
-using iterator = typename Matrix<T, col_size_, row_size_>::iterator;
 
 
 #endif

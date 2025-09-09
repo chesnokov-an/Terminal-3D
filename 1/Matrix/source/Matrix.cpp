@@ -1,5 +1,4 @@
-#include <iostream>
-#include <Matrix/Matrix.h>
+#include "Matrix/Matrix.h"
 #include <algorithm>
 
 /*----------------ITERATORS----------------*/
@@ -143,8 +142,6 @@ Matrix<T, col_size_, row_size_> operator-(const Matrix<T, col_size_, row_size_>&
     result -= b;
     return result;
 }
-
-
 
 /*----------------GETTERS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
