@@ -9,9 +9,9 @@ int main(){
         9, 10, 11, 12
     };
     Matrix<int, 3, 4> m2(5);
-    Matrix<int, 3, 4> res = m1.transposed();
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; j < 4; j++){
+    Matrix res = m1.transposed();
+    for(int i = 0; i < 4; i++){
+        for(int j = 0; j < 3; j++){
             std::cout << res(i, j) << " ";
         }
         std::cout << std::endl;

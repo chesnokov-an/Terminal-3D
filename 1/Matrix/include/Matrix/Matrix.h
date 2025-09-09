@@ -65,7 +65,7 @@ public:
     size_t get_row_size() const;
     size_t get_size() const;
 
-    Matrix transposed() const;
+    Matrix<T, row_size_, col_size_> transposed() const;
 
     class ColumnIterator{
     private:
@@ -83,6 +83,8 @@ public:
         ColumnIterator(const ColumnIterator& other) = default;
         ColumnIterator(T* start, T pos) : start_(start), pos_(pos){}
 
+        reference operator*();
+        pointer operator->();
         ColumnIterator& operator++();
         ColumnIterator operator++(int);
         ColumnIterator& operator--();
@@ -92,8 +94,7 @@ public:
         ColumnIterator& operator-=(const size_t n);
         bool operator==(const ColumnIterator& other) const = default;
         std::strong_ordering operator<=>(const ColumnIterator& other) const  { return pos_ <=> other.pos_; };
-
-        T& operator[](size_t index) const;
+        reference operator[](size_t index) const;
     };
 
     static_assert(std::random_access_iterator<iterator>);
@@ -284,14 +285,24 @@ size_t Matrix<T, col_size_, row_size_>::get_size() const{
 
 /*----------------MAIN FUNCTIONS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_> Matrix<T, col_size_, row_size_>::transposed() const{
-    Matrix<T, col_size_, row_size_> result;
+Matrix<T, row_size_, col_size_> Matrix<T, col_size_, row_size_>::transposed() const{
+    Matrix<T, row_size_, col_size_> result;
     std::copy(begin(), end(), result.col_begin());
     return result;
 }
 
 /*----------------COL ITERATOR----------------*/
 /*----------------OPERATORS----------------*/
+
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator::reference Matrix<T, col_size_, row_size_>::ColumnIterator::operator*(){
+    return *(start_ + row_size_ * (pos_ % col_size_) + (pos_ / col_size_));
+}
+
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator::pointer Matrix<T, col_size_, row_size_>::ColumnIterator::operator->(){
+    return start_ + row_size_ * (pos_ % col_size_) + (pos_ / col_size_);
+}
 
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>::ColumnIterator& Matrix<T, col_size_, row_size_>::ColumnIterator::operator++(){
@@ -360,8 +371,8 @@ Matrix<T, col_size_, row_size_>::ColumnIterator operator-(const T n, typename Ma
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-T& Matrix<T, col_size_, row_size_>::ColumnIterator::operator[](size_t index) const{
-    return *(start_ + row_size_ * (pos_ % col_size_) + (pos_ / col_size_));
+Matrix<T, col_size_, row_size_>::ColumnIterator::reference Matrix<T, col_size_, row_size_>::ColumnIterator::operator[](size_t index) const{
+    return *(start_ + row_size_ * ((pos_ + index) % col_size_) + ((pos_ + index) / col_size_));
 }
 
 
