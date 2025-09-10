@@ -16,7 +16,7 @@ int main(){
         }
         std::cout << std::endl;
     }
-    // std::for_each(res.begin(), res.end(), [](int value){ std::cout << value << " "; });
+    std::for_each(m2.begin(), res.end(), [](int value){ std::cout << value << " "; });
 
     return 0;
 }
