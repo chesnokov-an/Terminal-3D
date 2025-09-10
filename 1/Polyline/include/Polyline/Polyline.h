@@ -33,6 +33,7 @@ public:
     Polyline& operator=(Polyline&& other);
     void swap(Polyline& other);
     ~Polyline();
+    void add_point(const Point<T>& point);
     
 
 };
@@ -59,6 +60,20 @@ void Polyline<T>::swap(Polyline<T> &other){
 template <Numeric T>
 Polyline<T>::~Polyline(){
     delete [] dots_;
+}
+
+template <Numeric T>
+void Polyline<T>::add_point(const Point<T>& point){
+    if(size_ == capacity_){
+        if(capacity_ == 0){ capacity_ = 1; }
+        Point<T>* new_dots = new Point<T>[capacity_ * 2];
+        capacity_ *= 2;
+        std::copy(dots_, dots_ + size_, new_dots);
+        delete [] dots_;
+        dots_ = new_dots;
+    }
+    dots_[size_] = point;
+    size_++;
 }
 
 #endif
