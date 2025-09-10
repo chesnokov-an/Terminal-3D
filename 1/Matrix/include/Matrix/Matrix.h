@@ -6,6 +6,7 @@
 #include <utility>
 #include <iterator>
 #include <algorithm>
+#include <numeric>
 
 template <typename T>
 concept Numeric = std::is_integral_v<T> || std::is_floating_point_v<T>;
@@ -120,8 +121,8 @@ Matrix<T, col_size_, row_size_> operator+(const Matrix<T, col_size_, row_size_>&
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_> operator-(const Matrix<T, col_size_, row_size_>& a, const Matrix<T, col_size_, row_size_>& b);
 
-template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_> operator*(const Matrix<T, col_size_, row_size_>& a, const Matrix<T, col_size_, row_size_>& b);
+template <Numeric T, size_t M, size_t N, size_t P>
+Matrix<T, M, P> operator*(const Matrix<T, M, N>& a, const Matrix<T, N, P>& b);
 
 /*****************Realization*****************/
 /*----------------ITERATORS----------------*/
@@ -285,6 +286,24 @@ template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_> operator-(const Matrix<T, col_size_, row_size_>& a, const Matrix<T, col_size_, row_size_>& b){
     Matrix result = a;
     result -= b;
+    return result;
+}
+
+template <Numeric T, size_t M, size_t N, size_t P>
+Matrix<T, M, P> operator*(const Matrix<T, M, N>& a, const Matrix<T, N, P>& b){
+    Matrix<T, P, N> b_transposed = b.transposed();
+    Matrix<T, M, P> result;
+    
+    for(size_t i = 0; i < M * P; i++){
+        size_t res_row = i / P;
+        size_t res_col = i % P;
+
+        auto a_row = a.row_iters(res_row).first;
+        auto b_row = b_transposed.row_iters(res_col).first;
+
+        result(res_row, res_col) = std::inner_product(a_row, a_row + N, b_row, 0);
+    }
+
     return result;
 }
 
