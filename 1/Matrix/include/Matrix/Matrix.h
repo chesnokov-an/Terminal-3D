@@ -123,7 +123,7 @@ Matrix<T, col_size_, row_size_> operator-(const Matrix<T, col_size_, row_size_>&
 template <Numeric T, size_t M, size_t N, size_t P>
 Matrix<T, M, P> operator*(const Matrix<T, M, N>& a, const Matrix<T, N, P>& b);
 
-/*****************Realization*****************/
+/****************Realization****************/
 /*----------------ITERATORS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>::iterator Matrix<T, col_size_, row_size_>::begin(){

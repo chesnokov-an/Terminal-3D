@@ -3,15 +3,22 @@
 
 #include <concepts>
 #include <array>
+#include <cstddef>
+#include <cmath>
+#include <Matrix/Matrix.h>
 
 template <typename T>
 concept Numeric = std::is_arithmetic_v<T>;
 
 template <Numeric T>
-struct Point{
+class Point{
+public:
     T x = 0;
     T y = 0;
     T z = 0;
+
+    double distance(const Point& other);
+
 };
 
 template <Numeric T>
@@ -20,6 +27,28 @@ private:
     Point<T>* dots_ = nullptr;
     size_t capacity_ = 0;
     size_t size_ = 0;
+
+public:
+    using iterator = Point<T>*;
+    using const_iterator = const Point<T>*;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    
+    iterator begin();
+    iterator end();
+    const_iterator begin() const;
+    const_iterator end() const;
+
+    const_iterator cbegin() const;
+    const_iterator cend() const;
+
+    reverse_iterator rbegin();
+    reverse_iterator rend();
+    const_reverse_iterator rbegin() const;
+    const_reverse_iterator rend() const;
+
+    const_reverse_iterator crbegin() const;
+    const_reverse_iterator crend() const;
 
 public:
     Polyline(const Polyline& other) : dots_(new Point<T>[other.capacity_]), capacity_(other.capacity_), size_(other.size_){
@@ -34,10 +63,87 @@ public:
     void swap(Polyline& other);
     ~Polyline();
     void add_point(const Point<T>& point);
-    
+    void add_point(T x, T y, T z);
+    template <size_t col_size_>
+    Matrix<T, col_size_, 3> get_matrix();
+    template <size_t col_size_>
+    void set_from_matrix(const Matrix<T, col_size_, 3>& polyline_matrix);
+    void rotate(double x_degree, double y_degree, double z_degree);
+    void move(double x, double y, double z);
+    double distance();
 
 };
 
+/****************Realization****************/
+/*----------------POINT----------------*/
+template <Numeric T>
+double Point<T>::distance(const Point<T> &other){
+    return std::sqrt((other.x - x)*(other.x - x) + (other.y - y)*(other.y - y) + (other.z - z)*(other.z - z));
+}
+
+/*----------------POLYLINE----------------*/
+/*----------------ITERATORS----------------*/
+template <Numeric T>
+Polyline<T>::iterator Polyline<T>::begin(){
+    return (&dots_[0]);
+}
+
+template <Numeric T>
+Polyline<T>::iterator Polyline<T>::end(){
+    return (&dots_[0] + size_);
+}
+
+template <Numeric T>
+Polyline<T>::const_iterator Polyline<T>::begin() const{
+    return (&dots_[0]);
+}
+
+template <Numeric T>
+Polyline<T>::const_iterator Polyline<T>::end() const{
+    return (&dots_[0] + size_) const;
+}
+
+template <Numeric T>
+Polyline<T>::const_iterator Polyline<T>::cbegin() const{
+    return (&dots_[0]);
+}
+
+template <Numeric T>
+Polyline<T>::const_iterator Polyline<T>::cend() const{
+    return (&dots_[0] + size_) const;
+}
+
+template <Numeric T>
+Polyline<T>::reverse_iterator Polyline<T>::rbegin(){
+    return std::reverse_iterator<iterator>(end());
+}
+
+template <Numeric T>
+Polyline<T>::reverse_iterator Polyline<T>::rend(){
+    return std::reverse_iterator<iterator>(begin());
+}
+
+template <Numeric T>
+Polyline<T>::const_reverse_iterator Polyline<T>::rbegin() const{
+    return std::reverse_iterator<const_iterator>(end());
+}
+
+template <Numeric T>
+Polyline<T>::const_reverse_iterator Polyline<T>::rend() const{
+    return std::reverse_iterator<const_iterator>(begin());
+}
+
+template <Numeric T>
+Polyline<T>::const_reverse_iterator Polyline<T>::crbegin() const{
+    return std::reverse_iterator<const_iterator>(end());
+}
+
+template <Numeric T>
+Polyline<T>::const_reverse_iterator Polyline<T>::crend() const{
+    return std::reverse_iterator<const_iterator>(begin());
+}
+
+/*----------------OPERATORS----------------*/
 template <Numeric T>
 Polyline<T>& Polyline<T>::operator=(Polyline<T> other){
     swap(other);
@@ -57,11 +163,13 @@ void Polyline<T>::swap(Polyline<T> &other){
     std::swap(size_, other.size_);
 }
 
+/*----------------DISTRUCTOR----------------*/
 template <Numeric T>
 Polyline<T>::~Polyline(){
     delete [] dots_;
 }
 
+/*----------------MAIN FUNCTIONS----------------*/
 template <Numeric T>
 void Polyline<T>::add_point(const Point<T>& point){
     if(size_ == capacity_){
@@ -74,6 +182,79 @@ void Polyline<T>::add_point(const Point<T>& point){
     }
     dots_[size_] = point;
     size_++;
+}
+
+template <Numeric T>
+void Polyline<T>::add_point(T x, T y, T z){
+    Point<T> new_point = {x, y, z};
+    add_point(new_point);
+}
+
+template<Numeric T>
+template<size_t col_size_>
+Matrix<T, col_size_, 3> Polyline<T>::get_matrix(){
+    Matrix<T, size_, 3> polyline_matrix{};
+    for(size_t i = 0; i < size_; i++){
+        polyline_matrix(i, 0) = dots_[i].x;
+        polyline_matrix(i, 1) = dots_[i].y;
+        polyline_matrix(i, 2) = dots_[i].z;
+    }
+    return polyline_matrix;
+}
+
+template<Numeric T>
+template<size_t col_size_>
+void Polyline<T>::set_from_matrix(const Matrix<T, col_size_, 3>& polyline_matrix){
+    for(size_t i = 0; i < size_; i++){
+        dots_[i].x = polyline_matrix(i, 0);
+        dots_[i].y = polyline_matrix(i, 1);
+        dots_[i].z = polyline_matrix(i, 2);
+    }
+}
+
+template <Numeric T>
+void Polyline<T>::rotate(double x_degree, double y_degree, double z_degree){
+    double x_radians = x_degree * M_PI / 180.0;
+    double y_radians = y_degree * M_PI / 180.0;
+    double z_radians = z_degree * M_PI / 180.0;
+    Matrix<double, 3, 3> x_matrix = {
+        1, 0, 0,
+        0, std::cos(x_radians), std::sin(x_radians),
+        0, (-1) * std::sin(x_radians), std::cos(x_radians)
+    };
+    Matrix<double, 3, 3> y_matrix = {
+        std::cos(y_radians), 0, (-1) * std::sin(y_radians),
+        0, 1, 0,
+        std::sin(y_radians), 0, std::cos(y_radians)
+    };
+    Matrix<double, 3, 3> z_matrix = {
+        std::cos(z_radians), std::sin(z_radians), 0,
+        (-1) * std::sin(z_radians), std::cos(z_radians), 0,
+        0, 0, 1
+    };
+    Matrix<T, size_, 3> polyline_matrix = get_matrix();
+    polyline_matrix = polyline_matrix * x_matrix;
+    polyline_matrix = polyline_matrix * y_matrix;
+    polyline_matrix = polyline_matrix * z_matrix;
+    set_from_matrix(polyline_matrix);
+}
+
+template <Numeric T>
+void Polyline<T>::move(double x, double y, double z){
+    std::transform(begin(), end(), begin(), ()[Point<T>& point]{
+        point.x += x;
+        point.y += y;
+        point.z += z;
+    })
+}
+
+template <Numeric T>
+double Polyline<T>::distance(){
+    double result = 0;
+    for(size_t i = 1; i < size_; i++){
+        result += dots_[i].distance(dots_[i-1]);
+    }
+    return result;
 }
 
 #endif
