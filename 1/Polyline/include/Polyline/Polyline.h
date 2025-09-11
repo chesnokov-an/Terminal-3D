@@ -5,6 +5,7 @@
 #include <array>
 #include <cstddef>
 #include <cmath>
+#include <cstring>
 #include <Matrix/Matrix.h>
 
 template <typename T>
@@ -71,6 +72,8 @@ public:
     void rotate(double x_degree, double y_degree, double z_degree);
     void move(double x, double y, double z);
     double distance();
+    size_t find_distant();
+    void remove_distant();
 
 };
 
@@ -255,6 +258,28 @@ double Polyline<T>::distance(){
         result += dots_[i].distance(dots_[i-1]);
     }
     return result;
+}
+
+template <Numeric T>
+size_t Polyline<T>::find_distant(){
+    size_t res = 0;
+    double max_distance = 0;
+    double current_distance = 0;
+    for(size_t i = 1; i < (size_ - 1); i++){
+        current_distance = dots_[i].distance(dots_[i-1]) + dots_[i].distance(dots_[i+1]);
+        if(max_distance < current_distance){
+            max_distance = current_distance;
+            res = i;
+        }
+    }
+    return res;
+}
+
+template <Numeric T>
+void Polyline<T>::remove_distant(){
+    if(size_ <= 2){ return; }
+    size_t distant_index = find_distant();
+    std::memmove(begin() + distant_index, begin() + distant_index + 1, sizeof(Point<T>) * (size_ - distant_index - 1));
 }
 
 #endif
