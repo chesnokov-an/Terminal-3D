@@ -63,8 +63,11 @@ public:
     Polyline& operator=(Polyline&& other);
     void swap(Polyline& other);
     ~Polyline();
+    void resize(size_t new_capacity);
     void add_point(const Point<T>& point);
     void add_point(T x, T y, T z);
+    void add_polyline(Polyline& polyline>);
+    void add_polyline(Polyline&& polyline>);
     template <size_t col_size_>
     Matrix<T, col_size_, 3> get_matrix();
     template <size_t col_size_>
@@ -173,15 +176,21 @@ Polyline<T>::~Polyline(){
 }
 
 /*----------------MAIN FUNCTIONS----------------*/
+
+template <Numeric T>
+void Polyline<T>::resize(size_t new_capacity){
+    Point<T>* new_dots = new Point<T>[new_capacity];
+    std::copy(dots_, dots_ + size_, new_dots);
+    delete [] dots_;
+    dots_ = new_dots;
+    capacity_ = new_capacity;
+}
+
 template <Numeric T>
 void Polyline<T>::add_point(const Point<T>& point){
     if(size_ == capacity_){
         if(capacity_ == 0){ capacity_ = 1; }
-        Point<T>* new_dots = new Point<T>[capacity_ * 2];
-        capacity_ *= 2;
-        std::copy(dots_, dots_ + size_, new_dots);
-        delete [] dots_;
-        dots_ = new_dots;
+        resize(capacity_ * 2);
     }
     dots_[size_] = point;
     size_++;
@@ -191,6 +200,24 @@ template <Numeric T>
 void Polyline<T>::add_point(T x, T y, T z){
     Point<T> new_point = {x, y, z};
     add_point(new_point);
+}
+
+template <Numeric T>
+void Polyline<T>::add_polyline(Polyline<T>& other){
+    if(size_ + other.size_ > capacity_){
+        resize(std::max(capacity_ * 2, other.capacity * 2));
+    }
+    std::copy(other.begin(), other.end(), begin() + size_);
+    size_ += other.size_;
+}
+
+template <Numeric T>
+void Polyline<T>::add_polyline(Polyline<T>&& other){
+    if(size_ + other.size_ > capacity_){
+        resize(std::max(capacity_ * 2, other.capacity * 2));
+    }
+    std::move(other.begin(), other.end(), begin() + size_);
+    size_ += other.size_;
 }
 
 template<Numeric T>

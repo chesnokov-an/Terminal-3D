@@ -3,4 +3,5 @@ project(Lab1)
 
 add_subdirectory(Matrix)
 add_subdirectory(Polyline)
+add_subdirectory(Buffer)
 add_subdirectory(Dialogue)
