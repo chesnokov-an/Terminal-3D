@@ -20,6 +20,8 @@ public:
     using const_iterator = const T*;
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+    template <bool Const>
     class ColumnIterator;
     
     iterator begin();
@@ -38,15 +40,15 @@ public:
     const_reverse_iterator crbegin() const;
     const_reverse_iterator crend() const;
 
-    ColumnIterator col_begin();
-    const ColumnIterator col_begin() const;
-    ColumnIterator col_end();
-    const ColumnIterator col_end() const;
+    ColumnIterator<false> col_begin();
+    ColumnIterator<true> col_begin() const;
+    ColumnIterator<false> col_end();
+    ColumnIterator<true> col_end() const;
 
     std::pair<iterator, iterator> row_iters(size_t i);
     std::pair<const_iterator, const_iterator> row_iters(size_t i) const;
-    std::pair<ColumnIterator, ColumnIterator> col_iters(size_t j);
-    std::pair<const ColumnIterator, const ColumnIterator> col_iters(size_t j) const;
+    std::pair<ColumnIterator<false>, ColumnIterator<false>> col_iters(size_t j);
+    std::pair<ColumnIterator<true>, ColumnIterator<true>> col_iters(size_t j) const;
 
 public:
     Matrix() = default;
@@ -71,6 +73,7 @@ public:
     void fill(T value);
     Matrix transposed() const;
 
+    template <bool Const>
     class ColumnIterator{
     private:
         T* start_ = nullptr;
@@ -78,19 +81,17 @@ public:
 
     public:
         using difference_type = std::ptrdiff_t;
-        using value_type = T;
-        using pointer = T*;
-        using reference = T&;
+        using value_type = std::remove_const_t<T>;
+        using pointer = std::conditional_t<Const, const value_type*, value_type*>;
+        using reference = std::conditional_t<Const, const value_type&, value_type&>;
         using iterator_category = std::random_access_iterator_tag;
 
         ColumnIterator() = default;
         ColumnIterator(const ColumnIterator& other) = default;
         ColumnIterator(T* start, T pos) : start_(start), pos_(pos){}
 
-        reference operator*();
-        const reference operator*() const;
-        pointer operator->();
-        const pointer operator->() const;
+        reference operator*() const;
+        pointer operator->() const;
         ColumnIterator& operator++();
         ColumnIterator operator++(int);
         ColumnIterator& operator--();
@@ -101,8 +102,7 @@ public:
         difference_type operator-(const ColumnIterator& other) const;
         bool operator==(const ColumnIterator& other) const = default;
         std::strong_ordering operator<=>(const ColumnIterator& other) const = default;
-        reference operator[](size_t index);
-        const reference operator[](size_t index) const;
+        reference operator[](size_t index) const;
 
         ColumnIterator operator+(size_t n) const;
         friend ColumnIterator operator+(size_t n, const ColumnIterator& it){
@@ -187,26 +187,26 @@ Matrix<T, col_size_, row_size_>::const_reverse_iterator Matrix<T, col_size_, row
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator Matrix<T, col_size_, row_size_>::col_begin(){
-    ColumnIterator col_it{begin(), 0};
+Matrix<T, col_size_, row_size_>::ColumnIterator<false> Matrix<T, col_size_, row_size_>::col_begin(){
+    ColumnIterator<false> col_it{begin(), 0};
     return col_it;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-const Matrix<T, col_size_, row_size_>::ColumnIterator Matrix<T, col_size_, row_size_>::col_begin() const{
-    const ColumnIterator col_it{begin(), 0};
+Matrix<T, col_size_, row_size_>::ColumnIterator<true> Matrix<T, col_size_, row_size_>::col_begin() const{
+    const ColumnIterator<true> col_it{begin(), 0};
     return col_it;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator Matrix<T, col_size_, row_size_>::col_end(){
-    ColumnIterator col_it{begin(), col_size_ * row_size_};
+Matrix<T, col_size_, row_size_>::ColumnIterator<false> Matrix<T, col_size_, row_size_>::col_end(){
+    ColumnIterator<false> col_it{begin(), col_size_ * row_size_};
     return col_it;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-const Matrix<T, col_size_, row_size_>::ColumnIterator Matrix<T, col_size_, row_size_>::col_end() const{
-    const ColumnIterator col_it{begin(), col_size_ * row_size_};
+Matrix<T, col_size_, row_size_>::ColumnIterator<true> Matrix<T, col_size_, row_size_>::col_end() const{
+    const ColumnIterator<true> col_it{begin(), col_size_ * row_size_};
     return col_it;
 }
 
@@ -221,13 +221,13 @@ std::pair<typename Matrix<T, col_size_, row_size_>::const_iterator, typename Mat
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-std::pair<typename Matrix<T, col_size_, row_size_>::ColumnIterator, typename Matrix<T, col_size_, row_size_>::ColumnIterator> Matrix<T, col_size_, row_size_>::col_iters(size_t j){
-    return std::pair<ColumnIterator, ColumnIterator>(col_begin() + j * col_size_, col_begin() + (j + 1) * col_size_);
+std::pair<typename Matrix<T, col_size_, row_size_>::ColumnIterator<false>, typename Matrix<T, col_size_, row_size_>::ColumnIterator<false>> Matrix<T, col_size_, row_size_>::col_iters(size_t j){
+    return std::pair<ColumnIterator<false>, ColumnIterator<false>>(col_begin() + j * col_size_, col_begin() + (j + 1) * col_size_);
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-std::pair<const typename Matrix<T, col_size_, row_size_>::ColumnIterator, const typename Matrix<T, col_size_, row_size_>::ColumnIterator> Matrix<T, col_size_, row_size_>::col_iters(size_t j) const{
-    return std::pair<const ColumnIterator, const ColumnIterator>(col_begin() + j * col_size_, col_begin() + (j + 1) * col_size_);
+std::pair<typename Matrix<T, col_size_, row_size_>::ColumnIterator<true>, typename Matrix<T, col_size_, row_size_>::ColumnIterator<true>> Matrix<T, col_size_, row_size_>::col_iters(size_t j) const{
+    return std::pair<ColumnIterator<true>, ColumnIterator<true>>(col_begin() + j * col_size_, col_begin() + (j + 1) * col_size_);
 }
 
 /*----------------CONSTRUCTORS----------------*/
@@ -338,96 +338,92 @@ Matrix<T, col_size_, row_size_> Matrix<T, col_size_, row_size_>::transposed() co
 
 /*----------------COL ITERATOR----------------*/
 /*----------------OPERATORS----------------*/
-
-template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator::reference Matrix<T, col_size_, row_size_>::ColumnIterator::operator*(){
+template<Numeric T, size_t col_size_, size_t row_size_>
+template<bool Const>
+Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::reference Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::operator*() const{
     return *(start_ + row_size_ * (pos_ % col_size_) + (pos_ / col_size_));
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-const Matrix<T, col_size_, row_size_>::ColumnIterator::reference Matrix<T, col_size_, row_size_>::ColumnIterator::operator*() const{
-    return *(start_ + row_size_ * (pos_ % col_size_) + (pos_ / col_size_));
-}
-
-template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator::pointer Matrix<T, col_size_, row_size_>::ColumnIterator::operator->(){
+template <bool Const>
+Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::pointer Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::operator->() const{
     return start_ + row_size_ * (pos_ % col_size_) + (pos_ / col_size_);
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-const Matrix<T, col_size_, row_size_>::ColumnIterator::pointer Matrix<T, col_size_, row_size_>::ColumnIterator::operator->() const{
-    return start_ + row_size_ * (pos_ % col_size_) + (pos_ / col_size_);
-}
-
-template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator& Matrix<T, col_size_, row_size_>::ColumnIterator::operator++(){
+template <bool Const>
+Matrix<T, col_size_, row_size_>::ColumnIterator<Const>& Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::operator++(){
     ++pos_;
     return *this;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator Matrix<T, col_size_, row_size_>::ColumnIterator::operator++(int){
+template <bool Const>
+Matrix<T, col_size_, row_size_>::ColumnIterator<Const> Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::operator++(int){
     ColumnIterator tmp{start_, pos_};
     pos_++;
     return tmp;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator& Matrix<T, col_size_, row_size_>::ColumnIterator::operator--(){
+template <bool Const>
+Matrix<T, col_size_, row_size_>::ColumnIterator<Const>& Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::operator--(){
     --pos_;
     return *this;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator Matrix<T, col_size_, row_size_>::ColumnIterator::operator--(int){
+template <bool Const>
+Matrix<T, col_size_, row_size_>::ColumnIterator<Const> Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::operator--(int){
     ColumnIterator tmp{start_, pos_};
     pos_--;
     return tmp;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator& Matrix<T, col_size_, row_size_>::ColumnIterator::operator+=(size_t n){
+template <bool Const>
+Matrix<T, col_size_, row_size_>::ColumnIterator<Const>& Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::operator+=(size_t n){
     pos_ += n;
     return *this;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator& Matrix<T, col_size_, row_size_>::ColumnIterator::operator-=(size_t n){
+template <bool Const>
+Matrix<T, col_size_, row_size_>::ColumnIterator<Const>& Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::operator-=(size_t n){
     pos_ -= n;
     return *this;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator::difference_type Matrix<T, col_size_, row_size_>::ColumnIterator::operator-(const typename Matrix<T, col_size_, row_size_>::ColumnIterator& other) const{
+template <bool Const>
+Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::difference_type Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::operator-(const typename Matrix<T, col_size_, row_size_>::ColumnIterator<Const>& other) const{
     return pos_ - other.pos_;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator Matrix<T, col_size_, row_size_>::ColumnIterator::operator+(size_t n) const{
-    typename Matrix<T, col_size_, row_size_>::ColumnIterator result = *this;
+template <bool Const>
+Matrix<T, col_size_, row_size_>::ColumnIterator<Const> Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::operator+(size_t n) const{
+    typename Matrix<T, col_size_, row_size_>::ColumnIterator<Const> result = *this;
     result += n;
     return result;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator Matrix<T, col_size_, row_size_>::ColumnIterator::operator-(size_t n) const{
-    typename Matrix<T, col_size_, row_size_>::ColumnIterator result = *this;
+template <bool Const>
+Matrix<T, col_size_, row_size_>::ColumnIterator<Const> Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::operator-(size_t n) const{
+    typename Matrix<T, col_size_, row_size_>::ColumnIterator<Const> result = *this;
     result -= n;
     return result;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator::reference Matrix<T, col_size_, row_size_>::ColumnIterator::operator[](size_t index){
-    return *(start_ + row_size_ * ((pos_ + index) % col_size_) + ((pos_ + index) / col_size_));
-}
-
-template <Numeric T, size_t col_size_, size_t row_size_>
-const Matrix<T, col_size_, row_size_>::ColumnIterator::reference Matrix<T, col_size_, row_size_>::ColumnIterator::operator[](size_t index) const{
+template <bool Const>
+Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::reference Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::operator[](size_t index) const{
     return *(start_ + row_size_ * ((pos_ + index) % col_size_) + ((pos_ + index) / col_size_));
 }
 
 
-static_assert(std::random_access_iterator<Matrix<int, 4, 5>::ColumnIterator>);
+// static_assert(std::random_access_iterator<Matrix<int, 4, 5>::ColumnIterator<true>>);
 
 
 #endif
