@@ -8,9 +8,6 @@
 #include <cstring>
 #include <Matrix/Matrix.h>
 
-template <typename T>
-concept Numeric = std::is_arithmetic_v<T>;
-
 template <Numeric T>
 class Point{
 public:
@@ -52,6 +49,7 @@ public:
     const_reverse_iterator crend() const;
 
 public:
+    Polyline() = default;
     Polyline(const Polyline& other) : dots_(new Point<T>[other.capacity_]), capacity_(other.capacity_), size_(other.size_){
         std::copy(other.dots_, other.dots_ + size_, dots_);
     }
@@ -61,21 +59,24 @@ public:
     }
     Polyline& operator=(Polyline other);
     Polyline& operator=(Polyline&& other);
+    Point<T>& operator[](size_t i);
+    const Point<T>& operator[](size_t i) const;
     void swap(Polyline& other);
     ~Polyline();
     void resize(size_t new_capacity);
     void add_point(const Point<T>& point);
     void add_point(T x, T y, T z);
-    void add_polyline(Polyline& polyline>);
-    void add_polyline(Polyline&& polyline>);
+    void add_polyline(Polyline& polyline);
+    void add_polyline(Polyline&& polyline);
     template <size_t col_size_>
     Matrix<T, col_size_, 3> get_matrix();
     template <size_t col_size_>
     void set_from_matrix(const Matrix<T, col_size_, 3>& polyline_matrix);
     void rotate(double x_degree, double y_degree, double z_degree);
     void move(double x, double y, double z);
-    double distance();
-    size_t find_distant();
+    double distance() const;
+    size_t points_count() const;
+    size_t find_distant() const;
     void remove_distant();
 
 };
@@ -106,7 +107,7 @@ Polyline<T>::const_iterator Polyline<T>::begin() const{
 
 template <Numeric T>
 Polyline<T>::const_iterator Polyline<T>::end() const{
-    return (&dots_[0] + size_) const;
+    return (&dots_[0] + size_);
 }
 
 template <Numeric T>
@@ -116,7 +117,7 @@ Polyline<T>::const_iterator Polyline<T>::cbegin() const{
 
 template <Numeric T>
 Polyline<T>::const_iterator Polyline<T>::cend() const{
-    return (&dots_[0] + size_) const;
+    return (&dots_[0] + size_);
 }
 
 template <Numeric T>
@@ -160,6 +161,16 @@ template <Numeric T>
 Polyline<T> &Polyline<T>::operator=(Polyline<T> &&other){
     swap(other);
     return *this;
+}
+
+template <Numeric T>
+Point<T> &Polyline<T>::operator[](size_t i){
+    return dots_[i];
+}
+
+template <Numeric T>
+const Point<T> &Polyline<T>::operator[](size_t i) const{
+    return dots_[i];
 }
 
 template <Numeric T>
@@ -223,7 +234,7 @@ void Polyline<T>::add_polyline(Polyline<T>&& other){
 template<Numeric T>
 template<size_t col_size_>
 Matrix<T, col_size_, 3> Polyline<T>::get_matrix(){
-    Matrix<T, size_, 3> polyline_matrix{};
+    Matrix<T, this->size_, 3> polyline_matrix{};
     for(size_t i = 0; i < size_; i++){
         polyline_matrix(i, 0) = dots_[i].x;
         polyline_matrix(i, 1) = dots_[i].y;
@@ -262,7 +273,7 @@ void Polyline<T>::rotate(double x_degree, double y_degree, double z_degree){
         (-1) * std::sin(z_radians), std::cos(z_radians), 0,
         0, 0, 1
     };
-    Matrix<T, size_, 3> polyline_matrix = get_matrix();
+    Matrix<T, this->size_, 3> polyline_matrix = get_matrix();
     polyline_matrix = polyline_matrix * x_matrix;
     polyline_matrix = polyline_matrix * y_matrix;
     polyline_matrix = polyline_matrix * z_matrix;
@@ -271,15 +282,15 @@ void Polyline<T>::rotate(double x_degree, double y_degree, double z_degree){
 
 template <Numeric T>
 void Polyline<T>::move(double x, double y, double z){
-    std::transform(begin(), end(), begin(), ()[Point<T>& point]{
+    std::transform(begin(), end(), begin(), [x, y, z](Point<T>& point){
         point.x += x;
         point.y += y;
         point.z += z;
-    })
+    });
 }
 
 template <Numeric T>
-double Polyline<T>::distance(){
+double Polyline<T>::distance() const{
     double result = 0;
     for(size_t i = 1; i < size_; i++){
         result += dots_[i].distance(dots_[i-1]);
@@ -288,7 +299,12 @@ double Polyline<T>::distance(){
 }
 
 template <Numeric T>
-size_t Polyline<T>::find_distant(){
+size_t Polyline<T>::points_count() const{
+    return size_;
+}
+
+template <Numeric T>
+size_t Polyline<T>::find_distant() const{
     size_t res = 0;
     double max_distance = 0;
     double current_distance = 0;

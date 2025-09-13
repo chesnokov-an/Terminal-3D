@@ -61,14 +61,15 @@ public:
     Matrix& operator+=(const Matrix& other);
     Matrix& operator-=(const Matrix& other);
 
-    T& operator()(size_t i, size_t j);
-    T operator()(size_t i, size_t j) const;
+    T& operator[](size_t i, size_t j);
+    T operator[](size_t i, size_t j) const;
     
     size_t get_col_size() const;
     size_t get_row_size() const;
     size_t get_size() const;
 
-    Matrix<T, row_size_, col_size_> transposed() const;
+    void fill(T value);
+    Matrix transposed() const;
 
     class ColumnIterator{
     private:
@@ -265,12 +266,12 @@ Matrix<T, col_size_, row_size_>& Matrix<T, col_size_, row_size_>::operator-=(con
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-T& Matrix<T, col_size_, row_size_>::operator()(size_t i, size_t j){
+T& Matrix<T, col_size_, row_size_>::operator[](size_t i, size_t j){
     return matrix_[i][j];
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-T Matrix<T, col_size_, row_size_>::operator()(size_t i, size_t j) const{
+T Matrix<T, col_size_, row_size_>::operator[](size_t i, size_t j) const{
     return matrix_[i][j];
 }
 
@@ -300,7 +301,7 @@ Matrix<T, M, P> operator*(const Matrix<T, M, N>& a, const Matrix<T, N, P>& b){
         auto a_row = a.row_iters(res_row).first;
         auto b_row = b_transposed.row_iters(res_col).first;
 
-        result(res_row, res_col) = std::inner_product(a_row, a_row + N, b_row, 0);
+        result[res_row, res_col] = std::inner_product(a_row, a_row + N, b_row, 0);
     }
 
     return result;
@@ -324,7 +325,12 @@ size_t Matrix<T, col_size_, row_size_>::get_size() const{
 
 /*----------------MAIN FUNCTIONS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, row_size_, col_size_> Matrix<T, col_size_, row_size_>::transposed() const{
+void Matrix<T, col_size_, row_size_>::fill(T value){
+    std::fill(begin(), end(), value);
+}
+
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_> Matrix<T, col_size_, row_size_>::transposed() const{
     Matrix<T, row_size_, col_size_> result;
     std::copy(begin(), end(), result.col_begin());
     return result;
