@@ -41,6 +41,7 @@ public:
     const_reverse_iterator crend() const;
 
     ColumnIterator<false> col_begin();
+    ColumnIterator<true> col_cbegin() const;
     ColumnIterator<true> col_begin() const;
     ColumnIterator<false> col_end();
     ColumnIterator<true> col_end() const;
@@ -75,20 +76,23 @@ public:
 
     template <bool Const>
     class ColumnIterator{
-    private:
-        T* start_ = nullptr;
-        size_t pos_ = 0;
-
     public:
         using difference_type = std::ptrdiff_t;
-        using value_type = std::remove_const_t<T>;
+        using value_type = T;
         using pointer = std::conditional_t<Const, const value_type*, value_type*>;
         using reference = std::conditional_t<Const, const value_type&, value_type&>;
         using iterator_category = std::random_access_iterator_tag;
+    private:
+        pointer start_ = nullptr;
+        size_t pos_ = 0;
 
+    public:
         ColumnIterator() = default;
         ColumnIterator(const ColumnIterator& other) = default;
-        ColumnIterator(T* start, T pos) : start_(start), pos_(pos){}
+        ColumnIterator(pointer start, size_t pos) : start_(start), pos_(pos){}
+
+        friend class ColumnIterator<true>;
+        friend class ColumnIterator<false>;
 
         reference operator*() const;
         pointer operator->() const;
@@ -97,6 +101,12 @@ public:
         ColumnIterator& operator--();
         ColumnIterator operator--(int);
         ColumnIterator& operator=(const ColumnIterator& other) & = default;
+        template <bool C> requires (C == false)
+        ColumnIterator& operator=(const ColumnIterator<C>& other) &{
+            ColumnIterator<true> new_col_iter{other.start_, other.pos_};
+            *this = new_col_iter;
+            return *this;
+        }
         ColumnIterator& operator+=(size_t n);
         ColumnIterator& operator-=(size_t n);
         difference_type operator-(const ColumnIterator& other) const;
@@ -193,6 +203,12 @@ Matrix<T, col_size_, row_size_>::ColumnIterator<false> Matrix<T, col_size_, row_
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::ColumnIterator<true> Matrix<T, col_size_, row_size_>::col_cbegin() const{
+    ColumnIterator<true> col_it{begin(), 0};
+    return col_it;
+}
+
+template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>::ColumnIterator<true> Matrix<T, col_size_, row_size_>::col_begin() const{
     const ColumnIterator<true> col_it{begin(), 0};
     return col_it;
@@ -243,9 +259,7 @@ Matrix<T, col_size_, row_size_>::Matrix(InputIter begin, InputIter end){
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::Matrix(std::initializer_list<T> init){
-    std::copy(init.begin(), init.end(), begin());
-}
+Matrix<T, col_size_, row_size_>::Matrix(std::initializer_list<T> init) : Matrix(init.begin(), init.end()){}
 
 /*----------------OPERATORS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
@@ -360,7 +374,7 @@ Matrix<T, col_size_, row_size_>::ColumnIterator<Const>& Matrix<T, col_size_, row
 template <Numeric T, size_t col_size_, size_t row_size_>
 template <bool Const>
 Matrix<T, col_size_, row_size_>::ColumnIterator<Const> Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::operator++(int){
-    ColumnIterator tmp{start_, pos_};
+    ColumnIterator tmp = *this;
     pos_++;
     return tmp;
 }
