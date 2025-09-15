@@ -5,6 +5,7 @@
 #include <array>
 #include <cstddef>
 #include <cmath>
+#include <numbers>
 #include <cstring>
 #include <Matrix/Matrix.h>
 
@@ -16,8 +17,17 @@ public:
     T z = 0;
 
     double distance(const Point& other);
-
 };
+
+template <Numeric T>
+Matrix<T, 1, 3> get_matrix_from_point(const Point<T>& point){
+    return Matrix<T, 1, 3>{point.x, point.y, point.z};
+}
+
+template <Numeric T>
+Point<T> get_point_from_matrix(const Matrix<T, 1, 3>& matrix){
+    return Point<T>{matrix[0, 0], matrix[0, 1], matrix[0, 2]};
+}
 
 template <Numeric T>
 class Polyline{
@@ -66,17 +76,12 @@ public:
     void add_point(T x, T y, T z);
     void add_polyline(const Polyline& polyline);
     void add_polyline(Polyline&& polyline);
-    template <size_t col_size_>
-    Matrix<T, col_size_, 3> get_matrix();
-    template <size_t col_size_>
-    void set_from_matrix(const Matrix<T, col_size_, 3>& polyline_matrix);
     void rotate(double x_degree, double y_degree, double z_degree);
     void move(double x, double y, double z);
     double distance() const;
     size_t points_count() const;
     size_t find_distant() const;
     void remove_distant();
-
 };
 
 /****************Realization****************/
@@ -221,33 +226,11 @@ void Polyline<T>::add_polyline(Polyline<T>&& other){
     size_ += other.size_;
 }
 
-template<Numeric T>
-template<size_t col_size_>
-Matrix<T, col_size_, 3> Polyline<T>::get_matrix(){
-    Matrix<T, this->size_, 3> polyline_matrix{};
-    for(size_t i = 0; i < size_; i++){
-        polyline_matrix(i, 0) = dots_[i].x;
-        polyline_matrix(i, 1) = dots_[i].y;
-        polyline_matrix(i, 2) = dots_[i].z;
-    }
-    return polyline_matrix;
-}
-
-template<Numeric T>
-template<size_t col_size_>
-void Polyline<T>::set_from_matrix(const Matrix<T, col_size_, 3>& polyline_matrix){
-    for(size_t i = 0; i < size_; i++){
-        dots_[i].x = polyline_matrix[i, 0];
-        dots_[i].y = polyline_matrix[i, 1];
-        dots_[i].z = polyline_matrix[i, 2];
-    }
-}
-
 template <Numeric T>
 void Polyline<T>::rotate(double x_degree, double y_degree, double z_degree){
-    double x_radians = x_degree * M_PI / 180.0;
-    double y_radians = y_degree * M_PI / 180.0;
-    double z_radians = z_degree * M_PI / 180.0;
+    double x_radians = x_degree * std::numbers::pi_v<double> / 180.0;
+    double y_radians = y_degree * std::numbers::pi_v<double> / 180.0;
+    double z_radians = z_degree * std::numbers::pi_v<double> / 180.0;
     Matrix<double, 3, 3> x_matrix = {
         1, 0, 0,
         0, std::cos(x_radians), std::sin(x_radians),
@@ -263,11 +246,13 @@ void Polyline<T>::rotate(double x_degree, double y_degree, double z_degree){
         (-1) * std::sin(z_radians), std::cos(z_radians), 0,
         0, 0, 1
     };
-    Matrix<T, this->size_, 3> polyline_matrix = get_matrix();
-    polyline_matrix = polyline_matrix * x_matrix;
-    polyline_matrix = polyline_matrix * y_matrix;
-    polyline_matrix = polyline_matrix * z_matrix;
-    set_from_matrix(polyline_matrix);
+    std::transform(begin(), end(), begin(), [x_matrix, y_matrix, z_matrix](const Point<T>& point){
+            Matrix<T, 1, 3> matrix_point = get_matrix_from_point(point);
+            matrix_point = matrix_point * x_matrix;
+            matrix_point = matrix_point * y_matrix;
+            matrix_point = matrix_point * z_matrix;
+            return get_point_from_matrix(matrix_point);
+    });
 }
 
 template <Numeric T>
