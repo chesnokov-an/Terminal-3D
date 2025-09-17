@@ -1,3 +1,14 @@
+/**
+ * @file Polyline.h
+ * @brief 3D polyline class with geometric transformations and operations
+ * @author Chesnokov Alexandr
+ * @date 2025
+ * @version 1.0
+ * 
+ * This header defines a Polyline class for representing 3D polylines with support
+ * for various geometric transformations, point management, and mathematical operations.
+ */
+
 #ifndef POLYLINE_H
 #define POLYLINE_H
 
@@ -9,80 +20,265 @@
 #include <cstring>
 #include <Matrix/Matrix.h>
 
+/**
+ * @class Point
+ * @brief 3D point with coordinates and character label
+ * @tparam T Numeric type of coordinates (must satisfy Numeric concept)
+ * 
+ * Represents a point in 3D space with x, y, z coordinates and a character
+ * label for identification in rendering.
+ */
 template <Numeric T>
 class Point{
 public:
-    T x = 0;
-    T y = 0;
-    T z = 0;
-    char name_ = 'A';
+    T x = 0; ///< X coordinate (horizontal position)
+    T y = 0; ///< Y coordinate (depth position)  
+    T z = 0; ///< Z coordinate (vertical position)
+    char name_ = '*'; ///< Character label for point identification
 
+    /**
+     * @brief Calculates Euclidean distance to another point
+     * @param other Other point to calculate distance to (Point<T>)
+     * @return double Euclidean distance between the two points
+     * 
+     * Formula: sqrt((other.x - x)² + (other.y - y)² + (other.z - z)²)
+     */
     double distance(const Point& other);
 };
 
+/**
+ * @brief Converts Point to 1x3 Matrix for mathematical operations
+ * @tparam T Numeric type of coordinates (must satisfy Numeric concept)
+ * @param point Point object to convert
+ * @return Matrix<T, 1, 3> containing [x, y, z] coordinates
+ */
 template <Numeric T>
 Matrix<T, 1, 3> get_matrix_from_point(const Point<T>& point){
     return Matrix<T, 1, 3>{point.x, point.y, point.z};
 }
 
+/**
+ * @brief Converts 1x3 Matrix back to Point object
+ * @tparam T Numeric type of coordinates (must satisfy Numeric concept)
+ * @param matrix 1x3 Matrix containing [x, y, z] coordinates
+ * @param name Character label for the new point
+ * @return Point<T> with coordinates from matrix and specified name
+ */
 template <Numeric T>
 Point<T> get_point_from_matrix(const Matrix<T, 1, 3>& matrix, char name){
     return Point<T>{matrix[0, 0], matrix[0, 1], matrix[0, 2], name};
 }
 
+/**
+ * @class Polyline
+ * @brief 3D polyline composed of connected points with geometric operations
+ * @tparam T Numeric type of point coordinates (must satisfy Numeric concept)
+ * 
+ * The Polyline class represents a sequence of connected 3D points with support
+ * for various geometric transformations, point management, and mathematical operations.
+ * Uses dynamic memory allocation for point storage.
+ */
 template <Numeric T>
 class Polyline{
 private:
-    Point<T>* dots_ = nullptr;
-    size_t capacity_ = 0;
-    size_t size_ = 0;
+    Point<T>* dots_ = nullptr; ///< Dynamic array storing the polyline points
+    size_t capacity_ = 0; ///< Current capacity of the dynamic array
+    size_t size_ = 0; ///< Current number of points in the polyline
 
 public:
-    using iterator = Point<T>*;
-    using const_iterator = const Point<T>*;
-    using reverse_iterator = std::reverse_iterator<iterator>;
-    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    // Iterator type definitions
+    using iterator = Point<T>*; ///< Random access iterator type for point access
+    using const_iterator = const Point<T>*; ///< Constant random access iterator type
+    using reverse_iterator = std::reverse_iterator<iterator>; ///< Reverse iterator type
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>; ///< Constant reverse iterator type
     
-    iterator begin();
-    iterator end();
-    const_iterator begin() const;
-    const_iterator end() const;
-
-    const_iterator cbegin() const;
-    const_iterator cend() const;
-
-    reverse_iterator rbegin();
-    reverse_iterator rend();
-    const_reverse_iterator rbegin() const;
-    const_reverse_iterator rend() const;
-
-    const_reverse_iterator crbegin() const;
-    const_reverse_iterator crend() const;
+    // Iterator methods
+    iterator begin(); ///< Returns iterator to the first point
+    iterator end(); ///< Returns iterator to the element after the last point
+    const_iterator begin() const; ///< Returns const iterator to the first point
+    const_iterator end() const; ///< Returns const iterator to the element after the last point
+    const_iterator cbegin() const; ///< Returns const iterator to the first point
+    const_iterator cend() const; ///< Returns const iterator to the element after the last point
+    reverse_iterator rbegin(); ///< Returns reverse iterator to the last point
+    reverse_iterator rend(); ///< Returns reverse iterator to the element before the first point
+    const_reverse_iterator rbegin() const; ///< Returns const reverse iterator to the last point
+    const_reverse_iterator rend() const; ///< Returns const reverse iterator to the element before the first point
+    const_reverse_iterator crbegin() const; ///< Returns const reverse iterator to the last point
+    const_reverse_iterator crend() const; ///< Returns const reverse iterator to the element before the first point
 
 public:
-    Polyline() = default;
+// Constructors and destructor
+    Polyline() = default; ///< Default constructor (empty polyline)
+
+    /**
+     * @brief Copy constructor
+     * @param other Polyline to copy from
+     * 
+     * Creates a deep copy of the other polyline with separate memory allocation.
+     */
     Polyline(const Polyline& other) : dots_(new Point<T>[other.capacity_]), capacity_(other.capacity_), size_(other.size_){
         std::copy(other.dots_, other.dots_ + size_, dots_);
     }
+
+    /**
+     * @brief Move constructor
+     * @param other Polyline to move from
+     * 
+     * Transfers ownership of the other polyline's resources efficiently.
+     */
     Polyline(Polyline&& other){
         swap(other);
     }
+
+    /**
+     * @brief Copy/move assignment operator
+     * @param other Polyline to assign from (copied or moved)
+     * @return Reference to this polyline after assignment
+     * 
+     * Uses copy-and-swap idiom for exception safety.
+     */
     Polyline& operator=(Polyline other);
+
+    /**
+     * @brief Point access operator (mutable)
+     * @param i Index of the point to access (0-based)
+     * @return Reference to the point at index i
+     * @throws std::out_of_range if index is out of bounds
+     */
     Point<T>& operator[](size_t i);
+
+    /**
+     * @brief Point access operator (const)
+     * @param i Index of the point to access (0-based)
+     * @return Const reference to the point at index i
+     * @throws std::out_of_range if index is out of bounds
+     */
     const Point<T>& operator[](size_t i) const;
+
+    /**
+     * @brief Swap contents with another polyline
+     * @param other Polyline to swap with
+     * 
+     * Efficiently exchanges the contents of two polylines.
+     */
     void swap(Polyline& other);
+
+    /**
+     * @brief Destructor
+     * 
+     * Releases all allocated memory for points.
+     */
     ~Polyline();
+
+    // Capacity management
+    /**
+     * @brief Resize the internal storage capacity
+     * @param new_capacity New capacity for the point array
+     * 
+     * Reallocates memory to the new capacity, preserving existing points.
+     * If new capacity is smaller than current size, excess points are lost.
+     */
     void resize(size_t new_capacity);
+
+    // Point operations
+    /**
+     * @brief Add a point to the end of the polyline
+     * @param point Point object to add
+     * 
+     * Automatically resizes storage if necessary.
+     */
     void add_point(const Point<T>& point);
+
+    /**
+     * @brief Add a point with specified coordinates and label
+     * @param x X coordinate of the new point
+     * @param y Y coordinate of the new point
+     * @param z Z coordinate of the new point
+     * @param name Character label for the new point
+     * 
+     * Creates a Point object and adds it to the end of the polyline.
+     */
     void add_point(T x, T y, T z, char name);
+
+    /**
+     * @brief Append another polyline to this one (copy version)
+     * @param polyline Polyline to append (copied)
+     * 
+     * Adds all points from the other polyline to the end of this one.
+     */
     void add_polyline(const Polyline& polyline);
+
+    /**
+     * @brief Append another polyline to this one (move version)
+     * @param polyline Polyline to append (moved)
+     * 
+     * Efficiently transfers points from the other polyline to this one.
+     */
     void add_polyline(Polyline&& polyline);
+
+    // Geometric transformations
+    /**
+     * @brief Rotate the polyline around the origin
+     * @param x_degree Rotation angle around X-axis in degrees
+     * @param y_degree Rotation angle around Y-axis in degrees
+     * @param z_degree Rotation angle around Z-axis in degrees
+     * 
+     * Applies rotation matrices in Z-Y-X order (intrinsic rotations).
+     * Converts degrees to radians for trigonometric calculations.
+     */
     void rotate_from_origin(double x_degree, double y_degree, double z_degree);
+
+    /**
+     * @brief Rotate the polyline around an arbitrary vector
+     * @param start Starting point of the rotation vector
+     * @param finish Ending point of the rotation vector
+     * @param degree Rotation angle in degrees
+     * 
+     * Uses Rodrigues' rotation formula to create rotation matrix.
+     * The rotation axis is the vector from start to finish.
+     */
     void rotate_by_vector(const Point<T>& start, const Point<T>& finish, double degree);
+
+    /**
+     * @brief Translate (shift) the polyline by specified amounts
+     * @param x Translation amount along X-axis
+     * @param y Translation amount along Y-axis
+     * @param z Translation amount along Z-axis
+     * 
+     * Adds the translation values to all point coordinates.
+     */
     void shift(double x, double y, double z);
+
+    // Geometric properties and operations
+    /**
+     * @brief Calculate the total length of the polyline
+     * @return double Total length (sum of distances between consecutive points)
+     */
     double length() const;
+
+    /**
+     * @brief Get the number of points in the polyline
+     * @return size_t Number of points
+     */
     size_t points_count() const;
+
+    /**
+     * @brief Find the index of the most "distant" point
+     * @return size_t Index of the point with maximum sum of distances to neighbors
+     * 
+     * For each interior point (not first or last), calculates:
+     * distance(point[i-1], point[i]) + distance(point[i], point[i+1])
+     * Returns the index with the maximum such sum.
+     * Returns 0 if polyline has less than 3 points.
+     */
     size_t find_distant() const;
+
+    /**
+     * @brief Remove the most "distant" point from the polyline
+     * 
+     * Finds the point with maximum sum of distances to neighbors and removes it.
+     * Does nothing if polyline has 2 or fewer points.
+     */
     void remove_distant();
 };
 

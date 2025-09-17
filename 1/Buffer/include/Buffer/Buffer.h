@@ -1,3 +1,14 @@
+/**
+ * @file Buffer.h
+ * @brief 2D character buffer for 3D polyline rendering with isometric projection
+ * @author Chesnokov Alexandr
+ * @date 2025
+ * @version 1.0
+ * 
+ * This header defines a Buffer class for rendering 3D polylines onto a 2D character
+ * display using isometric projection. Includes support for colored terminal output.
+ */
+
 #ifndef BUFFER_H
 #define BUFFER_H
 
@@ -9,36 +20,110 @@
 #include <cmath>
 #include <stdexcept>
 
-#define GREEN "\033[38;2;0;255;0m"
-#define RED "\033[38;2;255;0;0m"
-#define BLUE "\033[38;2;0;191;255m"
-#define LIGHT "\033[38;2;180;180;180m"
-#define ORANGE "\033[38;2;255;165;0m"
-#define MAGENTA "\033[38;2;255;20;147m"
-#define YELLOW "\033[38;2;255;255;0m"
-#define RESET "\033[0;0m"
+// ANSI color codes for terminal output
+#define GREEN "\033[38;2;0;255;0m"    ///< Green color code (RGB: 0,255,0)
+#define BLUE "\033[38;2;0;191;255m"   ///< Blue color code (RGB: 0,191,255)
+#define RESET "\033[0;0m"             ///< Reset color and style codes
 
-
+/**
+ * @struct BufferPoint
+ * @brief 2D point representation for buffer coordinates
+ * 
+ * Used internally for converting 3D points to 2D screen coordinates
+ * during the rendering process.
+ */
 struct BufferPoint{
-    double x = 0;
-    double y = 0;
+    double x = 0; ///< X coordinate in buffer (vertical position)
+    double y = 0; ///< Y coordinate in buffer (horizontal position)
 };
 
+/**
+ * @class Buffer
+ * @brief 2D character buffer for rendering 3D polylines with isometric projection
+ * @tparam height_ Height of the buffer in characters (compile-time constant)
+ * @tparam width_ Width of the buffer in characters (compile-time constant)
+ * 
+ * The Buffer class provides a character-based display for 3D graphics using
+ * isometric projection. It supports rendering polylines with automatic line
+ * drawing and colored terminal output.
+ */
 template <size_t height_, size_t width_>
 class Buffer{
 private:
-    Matrix<char, height_, width_> buffer_{};
+    Matrix<char, height_, width_> buffer_{}; ///< Character matrix representing the display buffer
 
+    /**
+     * @brief Converts 3D point to 2D buffer coordinates using isometric projection
+     * @tparam T Numeric type of point coordinates (must satisfy Numeric concept)
+     * @param point 3D point to convert (Point<T> with x, y, z coordinates)
+     * @return BufferPoint containing 2D screen coordinates after projection
+     * 
+     * The projection formula used:
+     * x_2d = round((point.x + point.y) / sqrt(15) - point.z * 0.6) + height_ * 2 / 3
+     * y_2d = point.y - point.x + width_ / 2
+     */
     template <Numeric T>
     BufferPoint get_point_2d(const Point<T>& point);
+
+    /**
+     * @brief Calculates perpendicular distance from a point to a line segment
+     * @param point Point to calculate distance from (BufferPoint with x, y coordinates)
+     * @param start_line Start point of the line segment (BufferPoint)
+     * @param end_line End point of the line segment (BufferPoint)
+     * @return double Distance from the point to the line segment
+     * 
+     * Uses the formula for distance from point to line:
+     * distance = |(end.x - start.x)*(start.y - point.y) - (start.x - point.x)*(end.y - start.y)| 
+     *            / sqrt((end.x - start.x)² + (end.y - start.y)²)
+     */
     double distance_to_the_line(const BufferPoint& point, const BufferPoint& start_line, const BufferPoint& end_line);
+
+    /**
+     * @brief Draws a line between two 3D points in the buffer using Bresenham-like algorithm
+     * @tparam T Numeric type of point coordinates (must satisfy Numeric concept)
+     * @param point1 First 3D point (Point<T> with x, y, z coordinates and name)
+     * @param point2 Second 3D point (Point<T> with x, y, z coordinates and name)
+     * 
+     * Draws the points themselves as their character labels and connects them
+     * with '-' characters. Uses distance-based line drawing for smooth lines.
+     */
     template <Numeric T>
     void draw_line(const Point<T>& point1, const Point<T>& point2);
+
+    /**
+     * @brief Draws coordinate axes (X, Y, Z) in the buffer
+     * 
+     * Creates axes labeled 'X', 'Y', 'Z' originating from point 'O' (origin).
+     * The axes are drawn using the draw_line method.
+     */
     void draw_axes();
 
 public:
+    /**
+     * @brief Default constructor
+     * 
+     * Initializes the buffer with spaces and draws coordinate axes.
+     */
     Buffer();
+
+    /**
+     * @brief Clears the buffer and redraws axes
+     * 
+     * Fills the buffer with space characters and redraws the coordinate axes.
+     * Useful for resetting the display between frames.
+     */
     void clean_buffer();
+
+    /**
+     * @brief Stream insertion operator for Polyline objects
+     * @tparam T Numeric type of polyline coordinates (must satisfy Numeric concept)
+     * @param buffer Reference to the target buffer
+     * @param polyline Polyline object to render into the buffer
+     * @return Reference to the buffer after rendering
+     * 
+     * Renders each segment of the polyline using draw_line method.
+     * Friend function for direct access to buffer internals.
+     */
     template <Numeric T>
     friend Buffer& operator<<(Buffer& buffer, const Polyline<T>& polyline){
         size_t size = polyline.points_count();
@@ -47,6 +132,18 @@ public:
         }
         return buffer;
     }
+
+    /**
+     * @brief Output stream operator for buffer display
+     * @param out Output stream to write to (e.g., std::cout)
+     * @param buffer Buffer object to display
+     * @return Reference to the output stream
+     * 
+     * Outputs the buffer contents with colored formatting:
+     * - Lines are displayed in GREEN
+     * - Points are displayed in BLUE
+     * Friend function for direct access to buffer internals.
+     */
     friend std::ostream& operator<<(std::ostream& out, const Buffer& buffer){
         for(size_t x = 0; x < height_; x++){
             std::for_each(buffer.buffer_.begin() + x * width_, buffer.buffer_.begin() + (x + 1) * width_, [&out](char elem){
