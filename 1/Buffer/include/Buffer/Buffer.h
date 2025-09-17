@@ -78,22 +78,17 @@ void Buffer<height_, width_>::draw_line(const Point<T>& point1, const Point<T>& 
     size_t min_y = std::min(std::max(std::min(point_2d_1.y, point_2d_2.y), static_cast<double>(0)), static_cast<double>(width_-1));
     size_t max_x = std::max(std::min(std::max(point_2d_1.x, point_2d_2.x), static_cast<double>(height_-1)), static_cast<double>(0));
     size_t max_y = std::max(std::min(std::max(point_2d_1.y, point_2d_2.y), static_cast<double>(width_-1)), static_cast<double>(0));
-    if(min_x == max_x){
-        for(size_t y = min_y+1; y < max_y; y++){
-            buffer_[min_x, y] = '-';
-        }
-        return;
-    }
     if(min_y == max_y){
         for(size_t x = min_x+1; x < max_x; x++){
             buffer_[x, min_y] = '-';
         }
         return;
     }
-    for(size_t x = min_x+1; x < max_x; x++){
-        for(size_t y = min_y+1; y < max_y; y++){
+    for(size_t x = min_x; x <= max_x; x++){
+        for(size_t y = min_y; y <= max_y; y++){
+            if((x == min_x || x == max_x) && (y == min_y || y == max_y)){ continue; }
             BufferPoint current = {static_cast<double>(x), static_cast<double>(y)};
-            if(distance_to_the_line(current, point_2d_1, point_2d_2) < std::sqrt(3)/4){
+            if(distance_to_the_line(current, point_2d_1, point_2d_2) < 0.4){
                 buffer_[x, y] = '-';
             }
         }

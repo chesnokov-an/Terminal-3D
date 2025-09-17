@@ -131,8 +131,8 @@ Matrix<T, col_size_, row_size_> operator+(const Matrix<T, col_size_, row_size_>&
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_> operator-(const Matrix<T, col_size_, row_size_>& a, const Matrix<T, col_size_, row_size_>& b);
 
-template <Numeric T, size_t M, size_t N, size_t P>
-Matrix<T, M, P> operator*(const Matrix<T, M, N>& a, const Matrix<T, N, P>& b);
+template <Numeric T, Numeric U, size_t M, size_t N, size_t P>
+Matrix<T, M, P> operator*(const Matrix<T, M, N>& a, const Matrix<U, N, P>& b);
 
 /****************Realization****************/
 /*----------------ITERATORS----------------*/
@@ -303,9 +303,9 @@ Matrix<T, col_size_, row_size_> operator-(const Matrix<T, col_size_, row_size_>&
     return result;
 }
 
-template <Numeric T, size_t M, size_t N, size_t P>
-Matrix<T, M, P> operator*(const Matrix<T, M, N>& a, const Matrix<T, N, P>& b){
-    Matrix<T, P, N> b_transposed = b.transposed();
+template <Numeric T, Numeric U, size_t M, size_t N, size_t P>
+Matrix<T, M, P> operator*(const Matrix<T, M, N>& a, const Matrix<U, N, P>& b){
+    Matrix<U, P, N> b_transposed = b.transposed();
     Matrix<T, M, P> result;
     
     for(size_t i = 0; i < M * P; i++){
