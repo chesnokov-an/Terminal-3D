@@ -77,8 +77,8 @@ public:
     void add_polyline(const Polyline& polyline);
     void add_polyline(Polyline&& polyline);
     void rotate(double x_degree, double y_degree, double z_degree);
-    void move(double x, double y, double z);
-    double distance() const;
+    void shift(double x, double y, double z);
+    double length() const;
     size_t points_count() const;
     size_t find_distant() const;
     void remove_distant();
@@ -188,7 +188,7 @@ Polyline<T>::~Polyline(){
 template <Numeric T>
 void Polyline<T>::resize(size_t new_capacity){
     Point<T>* new_dots = new Point<T>[new_capacity];
-    std::copy(dots_, dots_ + size_, new_dots);
+    std::copy(dots_, dots_ + std::min(size_, new_capacity), new_dots);
     delete [] dots_;
     dots_ = new_dots;
     capacity_ = new_capacity;
@@ -211,7 +211,7 @@ void Polyline<T>::add_point(T x, T y, T z){
 template <Numeric T>
 void Polyline<T>::add_polyline(const Polyline<T>& other){
     if(size_ + other.size_ > capacity_){
-        resize(std::max(capacity_ * 2, other.capacity * 2));
+        resize(std::max(capacity_ * 2, other.capacity_ * 2));
     }
     std::copy(other.begin(), other.end(), begin() + size_);
     size_ += other.size_;
@@ -219,6 +219,13 @@ void Polyline<T>::add_polyline(const Polyline<T>& other){
 
 template <Numeric T>
 void Polyline<T>::add_polyline(Polyline<T>&& other){
+    if((size_ + other.size_ > capacity_) && (size_ + other.size_ <= other.capacity_)){
+        std::move(other.begin(), other.end(), other.begin() + size_);
+        std::move(begin(), end(), other.begin());
+        swap(other);
+        size_ += other.size_;
+        return;
+    }
     if(size_ + other.size_ > capacity_){
         resize(std::max(capacity_ * 2, other.capacity * 2));
     }
@@ -256,7 +263,7 @@ void Polyline<T>::rotate(double x_degree, double y_degree, double z_degree){
 }
 
 template <Numeric T>
-void Polyline<T>::move(double x, double y, double z){
+void Polyline<T>::shift(double x, double y, double z){
     std::transform(begin(), end(), begin(), [x, y, z](Point<T> point){
         point.x += x;
         point.y += y;
@@ -266,7 +273,7 @@ void Polyline<T>::move(double x, double y, double z){
 }
 
 template <Numeric T>
-double Polyline<T>::distance() const{
+double Polyline<T>::length() const{
     double result = 0;
     for(size_t i = 1; i < size_; i++){
         result += dots_[i].distance(dots_[i-1]);
@@ -295,10 +302,11 @@ size_t Polyline<T>::find_distant() const{
 }
 
 template <Numeric T>
-void Polyline<T>::remove_distant(){  
+void Polyline<T>::remove_distant(){
     if(size_ <= 2){ return; }
     size_t distant_index = find_distant();
-    std::memmove(begin() + distant_index, begin() + distant_index + 1, sizeof(Point<T>) * (size_ - distant_index - 1));
+    std::move(begin() + distant_index + 1, end(), begin() + distant_index);
+    size_--;
 }
 
 #endif
