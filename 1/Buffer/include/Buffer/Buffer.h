@@ -9,6 +9,16 @@
 #include <cmath>
 #include <stdexcept>
 
+#define GREEN "\033[38;2;0;255;0m"
+#define RED "\033[38;2;255;0;0m"
+#define BLUE "\033[38;2;0;191;255m"
+#define LIGHT "\033[38;2;180;180;180m"
+#define ORANGE "\033[38;2;255;165;0m"
+#define MAGENTA "\033[38;2;255;20;147m"
+#define YELLOW "\033[38;2;255;255;0m"
+#define RESET "\033[0;0m"
+
+
 struct BufferPoint{
     double x = 0;
     double y = 0;
@@ -39,7 +49,10 @@ public:
     }
     friend std::ostream& operator<<(std::ostream& out, const Buffer& buffer){
         for(size_t x = 0; x < height_; x++){
-            std::for_each(buffer.buffer_.begin() + x * width_, buffer.buffer_.begin() + (x + 1) * width_, [&out](char elem){ out << elem; });
+            std::for_each(buffer.buffer_.begin() + x * width_, buffer.buffer_.begin() + (x + 1) * width_, [&out](char elem){
+                if(elem != '-'){ out << BLUE << elem << RESET; }
+                else{ out << GREEN << elem << RESET; }
+            });
             out << std::endl;
         }
         return out;
@@ -69,10 +82,10 @@ void Buffer<height_, width_>::draw_line(const Point<T>& point1, const Point<T>& 
     BufferPoint point_2d_1 = get_point_2d(point1);
     BufferPoint point_2d_2 = get_point_2d(point2);
     if(point_2d_1.x < height_ && point_2d_1.x >= 0 && point_2d_1.y < width_ && point_2d_1.y >= 0){
-        buffer_[point_2d_1.x, point_2d_1.y] = '*';
+        buffer_[point_2d_1.x, point_2d_1.y] = point1.name_;
     }
     if(point_2d_2.x < height_ && point_2d_2.x >= 0 && point_2d_2.y < width_ && point_2d_2.y >= 0){
-        buffer_[point_2d_2.x, point_2d_2.y] = '*';
+        buffer_[point_2d_2.x, point_2d_2.y] = point2.name_;
     }
     size_t min_x = std::min(std::max(std::min(point_2d_1.x, point_2d_2.x), static_cast<double>(0)), static_cast<double>(height_-1));
     size_t min_y = std::min(std::max(std::min(point_2d_1.y, point_2d_2.y), static_cast<double>(0)), static_cast<double>(width_-1));
@@ -97,10 +110,10 @@ void Buffer<height_, width_>::draw_line(const Point<T>& point1, const Point<T>& 
 
 template<size_t height_, size_t width_>
 void Buffer<height_, width_>::draw_axes(){
-    Point<int> O = {0, 0, 0};
-    Point<int> X = {height_-1, 0, 0};
-    Point<int> Y = {0, height_-1, 0};
-    Point<int> Z = {0, 0, height_-1};
+    Point<int> O = {0, 0, 0, 'O'};
+    Point<int> X = {height_-1, 0, 0, 'X'};
+    Point<int> Y = {0, height_-1, 0, 'Y'};
+    Point<int> Z = {0, 0, height_-1, 'Z'};
     draw_line(O, X);
     draw_line(O, Y);
     draw_line(O, Z);
@@ -108,8 +121,7 @@ void Buffer<height_, width_>::draw_axes(){
 
 template<size_t height_, size_t width_>
 Buffer<height_, width_>::Buffer(){
-    buffer_.fill(' ');
-    draw_axes();
+    clean_buffer();
 }
 
 template<size_t height_, size_t width_>

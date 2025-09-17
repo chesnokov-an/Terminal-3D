@@ -15,6 +15,7 @@ public:
     T x = 0;
     T y = 0;
     T z = 0;
+    char name_ = 'A';
 
     double distance(const Point& other);
 };
@@ -73,7 +74,7 @@ public:
     ~Polyline();
     void resize(size_t new_capacity);
     void add_point(const Point<T>& point);
-    void add_point(T x, T y, T z);
+    void add_point(T x, T y, T z, char name);
     void add_polyline(const Polyline& polyline);
     void add_polyline(Polyline&& polyline);
     void rotate(double x_degree, double y_degree, double z_degree);
@@ -204,8 +205,8 @@ void Polyline<T>::add_point(const Point<T>& point){
 }
 
 template <Numeric T>
-void Polyline<T>::add_point(T x, T y, T z){
-    add_point(Point<T>{x, y, z});
+void Polyline<T>::add_point(T x, T y, T z, char name){
+    add_point(Point<T>{x, y, z, name});
 }
 
 template <Numeric T>
