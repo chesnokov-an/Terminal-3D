@@ -23,6 +23,9 @@ public:
 
     template <bool Const>
     class ColumnIterator;
+
+    using column_iterator = ColumnIterator<false>;
+    using const_column_iterator = ColumnIterator<true>;
     
     iterator begin();
     iterator end();
@@ -40,11 +43,12 @@ public:
     const_reverse_iterator crbegin() const;
     const_reverse_iterator crend() const;
 
-    ColumnIterator<false> col_begin();
-    ColumnIterator<true> col_cbegin() const;
-    ColumnIterator<true> col_begin() const;
-    ColumnIterator<false> col_end();
-    ColumnIterator<true> col_end() const;
+    column_iterator col_begin();
+    const_column_iterator col_begin() const;
+    const_column_iterator col_cbegin() const;
+    column_iterator col_end();
+    const_column_iterator col_end() const;
+    const_column_iterator col_cend() const;
 
     std::pair<iterator, iterator> row_iters(size_t i);
     std::pair<const_iterator, const_iterator> row_iters(size_t i) const;
@@ -67,9 +71,9 @@ public:
     T& operator[](size_t i, size_t j);
     T operator[](size_t i, size_t j) const;
     
-    size_t get_col_size() const;
-    size_t get_row_size() const;
-    size_t get_size() const;
+    consteval size_t get_col_size() const;
+    consteval size_t get_row_size() const;
+    consteval size_t get_size() const;
 
     void fill(T value);
     Matrix transposed() const;
@@ -196,32 +200,38 @@ Matrix<T, col_size_, row_size_>::const_reverse_iterator Matrix<T, col_size_, row
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator<false> Matrix<T, col_size_, row_size_>::col_begin(){
+Matrix<T, col_size_, row_size_>::column_iterator Matrix<T, col_size_, row_size_>::col_begin(){
     ColumnIterator<false> col_it{begin(), 0};
     return col_it;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator<true> Matrix<T, col_size_, row_size_>::col_cbegin() const{
-    ColumnIterator<true> col_it{begin(), 0};
-    return col_it;
-}
-
-template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator<true> Matrix<T, col_size_, row_size_>::col_begin() const{
+Matrix<T, col_size_, row_size_>::const_column_iterator Matrix<T, col_size_, row_size_>::col_begin() const{
     const ColumnIterator<true> col_it{begin(), 0};
     return col_it;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator<false> Matrix<T, col_size_, row_size_>::col_end(){
+Matrix<T, col_size_, row_size_>::const_column_iterator Matrix<T, col_size_, row_size_>::col_cbegin() const{
+    ColumnIterator<true> col_it{begin(), 0};
+    return col_it;
+}
+
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::column_iterator Matrix<T, col_size_, row_size_>::col_end(){
     ColumnIterator<false> col_it{begin(), col_size_ * row_size_};
     return col_it;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_>::ColumnIterator<true> Matrix<T, col_size_, row_size_>::col_end() const{
+Matrix<T, col_size_, row_size_>::const_column_iterator Matrix<T, col_size_, row_size_>::col_end() const{
     const ColumnIterator<true> col_it{begin(), col_size_ * row_size_};
+    return col_it;
+}
+
+template <Numeric T, size_t col_size_, size_t row_size_>
+Matrix<T, col_size_, row_size_>::const_column_iterator Matrix<T, col_size_, row_size_>::col_cend() const{
+    ColumnIterator<true> col_it{begin(), col_size_ * row_size_};
     return col_it;
 }
 
@@ -322,17 +332,17 @@ Matrix<T, M, P> operator*(const Matrix<T, M, N>& a, const Matrix<U, N, P>& b){
 
 /*----------------GETTERS----------------*/
 template <Numeric T, size_t col_size_, size_t row_size_>
-size_t Matrix<T, col_size_, row_size_>::get_col_size() const{
+consteval size_t Matrix<T, col_size_, row_size_>::get_col_size() const{
     return col_size_;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-size_t Matrix<T, col_size_, row_size_>::get_row_size() const{
+consteval size_t Matrix<T, col_size_, row_size_>::get_row_size() const{
     return row_size_;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-size_t Matrix<T, col_size_, row_size_>::get_size() const{
+consteval size_t Matrix<T, col_size_, row_size_>::get_size() const{
     return col_size_ * row_size_;
 }
 
@@ -388,7 +398,7 @@ Matrix<T, col_size_, row_size_>::ColumnIterator<Const>& Matrix<T, col_size_, row
 template <Numeric T, size_t col_size_, size_t row_size_>
 template <bool Const>
 Matrix<T, col_size_, row_size_>::ColumnIterator<Const> Matrix<T, col_size_, row_size_>::ColumnIterator<Const>::operator--(int){
-    ColumnIterator tmp{start_, pos_};
+    ColumnIterator tmp = *this;
     pos_--;
     return tmp;
 }
