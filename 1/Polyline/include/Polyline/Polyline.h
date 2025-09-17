@@ -26,8 +26,8 @@ Matrix<T, 1, 3> get_matrix_from_point(const Point<T>& point){
 }
 
 template <Numeric T>
-Point<T> get_point_from_matrix(const Matrix<T, 1, 3>& matrix){
-    return Point<T>{matrix[0, 0], matrix[0, 1], matrix[0, 2]};
+Point<T> get_point_from_matrix(const Matrix<T, 1, 3>& matrix, char name){
+    return Point<T>{matrix[0, 0], matrix[0, 1], matrix[0, 2], name};
 }
 
 template <Numeric T>
@@ -77,7 +77,8 @@ public:
     void add_point(T x, T y, T z, char name);
     void add_polyline(const Polyline& polyline);
     void add_polyline(Polyline&& polyline);
-    void rotate(double x_degree, double y_degree, double z_degree);
+    void rotate_from_origin(double x_degree, double y_degree, double z_degree);
+    void rotate_by_vector(const Point<T>& start, const Point<T>& finish, double degree);
     void shift(double x, double y, double z);
     double length() const;
     size_t points_count() const;
@@ -235,7 +236,7 @@ void Polyline<T>::add_polyline(Polyline<T>&& other){
 }
 
 template <Numeric T>
-void Polyline<T>::rotate(double x_degree, double y_degree, double z_degree){
+void Polyline<T>::rotate_from_origin(double x_degree, double y_degree, double z_degree){
     double x_radians = x_degree * std::numbers::pi_v<double> / 180.0;
     double y_radians = y_degree * std::numbers::pi_v<double> / 180.0;
     double z_radians = z_degree * std::numbers::pi_v<double> / 180.0;
@@ -259,7 +260,30 @@ void Polyline<T>::rotate(double x_degree, double y_degree, double z_degree){
             matrix_point = matrix_point * x_matrix;
             matrix_point = matrix_point * y_matrix;
             matrix_point = matrix_point * z_matrix;
-            return get_point_from_matrix(matrix_point);
+            return get_point_from_matrix(matrix_point, point.name_);
+    });
+}
+
+template <Numeric T>
+void Polyline<T>::rotate_by_vector(const Point<T>& start, const Point<T>& finish, double degree){
+    double radians = degree * std::numbers::pi_v<double> / 180.0;
+    double u = finish.x, v = finish.y, w = finish.z;
+    double len = std::sqrt(u*u + v*v + w*w);
+    if(len == 0) { return; }
+    u /= len; v /= len; w /= len;
+    double c = std::cos(radians);
+    double s = std::sin(radians);
+    double t = 1 - c;
+    Matrix<double, 3, 3> rotation_matrix = {
+        t*u*u + c,      t*u*v - s*w,   t*u*w + s*v,
+        t*u*v + s*w,    t*v*v + c,     t*v*w - s*u,
+        t*u*w - s*v,    t*v*w + s*u,   t*w*w + c
+    };
+    std::transform(begin(), end(), begin(), [rotation_matrix, start](const Point<T>& point){
+            Matrix<T, 1, 3> matrix_point = get_matrix_from_point(point) - get_matrix_from_point(start);
+            matrix_point = matrix_point * rotation_matrix;
+            matrix_point = matrix_point + get_matrix_from_point(start);
+            return get_point_from_matrix(matrix_point, point.name_);
     });
 }
 
