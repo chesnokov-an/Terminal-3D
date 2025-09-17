@@ -226,13 +226,15 @@ void Polyline<T>::add_polyline(Polyline<T>&& other){
         std::move(begin(), end(), other.begin());
         swap(other);
         size_ += other.size_;
+        other.size_ = 0;
         return;
     }
     if(size_ + other.size_ > capacity_){
-        resize(std::max(capacity_ * 2, other.capacity * 2));
+        resize(std::max(capacity_ * 2, other.capacity_ * 2));
     }
     std::move(other.begin(), other.end(), begin() + size_);
     size_ += other.size_;
+    other.size_ = 0;
 }
 
 template <Numeric T>
@@ -266,7 +268,7 @@ void Polyline<T>::rotate_from_origin(double x_degree, double y_degree, double z_
 
 template <Numeric T>
 void Polyline<T>::rotate_by_vector(const Point<T>& start, const Point<T>& finish, double degree){
-    double radians = degree * std::numbers::pi_v<double> / 180.0;
+    double radians = (-1) * degree * std::numbers::pi_v<double> / 180.0;
     double u = finish.x, v = finish.y, w = finish.z;
     double len = std::sqrt(u*u + v*v + w*w);
     if(len == 0) { return; }

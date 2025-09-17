@@ -21,7 +21,7 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 add_executable (Tests   source/main.cpp
-                        source/TestCase1.cpp)
+                        source/TestCase.cpp)
 
 target_link_libraries(Tests gtest
                             gtest_main

@@ -274,6 +274,7 @@ Matrix<T, col_size_, row_size_>::Matrix(std::initializer_list<T> init) : Matrix(
 template <Numeric T, size_t col_size_, size_t row_size_>
 Matrix<T, col_size_, row_size_>& Matrix<T, col_size_, row_size_>::operator=(std::initializer_list<T> init){
     std::copy(init.begin(), init.end(), begin());
+    return *this;
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
