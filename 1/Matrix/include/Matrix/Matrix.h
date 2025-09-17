@@ -76,7 +76,7 @@ public:
     consteval size_t get_size() const;
 
     void fill(T value);
-    Matrix transposed() const;
+    Matrix<T, row_size_, col_size_> transposed() const;
 
     template <bool Const>
     class ColumnIterator{
@@ -353,7 +353,7 @@ void Matrix<T, col_size_, row_size_>::fill(T value){
 }
 
 template <Numeric T, size_t col_size_, size_t row_size_>
-Matrix<T, col_size_, row_size_> Matrix<T, col_size_, row_size_>::transposed() const{
+Matrix<T, row_size_, col_size_> Matrix<T, col_size_, row_size_>::transposed() const{
     Matrix<T, row_size_, col_size_> result;
     std::copy(begin(), end(), result.col_begin());
     return result;
