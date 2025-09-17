@@ -94,6 +94,11 @@ public:
         friend class ColumnIterator<true>;
         friend class ColumnIterator<false>;
 
+        template <bool C = Const, typename = std::enable_if_t<!C>>
+        operator ColumnIterator<true>() const{
+            return ColumnIterator<true>(start_, pos_);
+        }
+
         reference operator*() const;
         pointer operator->() const;
         ColumnIterator& operator++();
@@ -101,12 +106,6 @@ public:
         ColumnIterator& operator--();
         ColumnIterator operator--(int);
         ColumnIterator& operator=(const ColumnIterator& other) & = default;
-        template <bool C> requires (C == false)
-        ColumnIterator& operator=(const ColumnIterator<C>& other) &{
-            ColumnIterator<true> new_col_iter{other.start_, other.pos_};
-            *this = new_col_iter;
-            return *this;
-        }
         ColumnIterator& operator+=(size_t n);
         ColumnIterator& operator-=(size_t n);
         difference_type operator-(const ColumnIterator& other) const;
