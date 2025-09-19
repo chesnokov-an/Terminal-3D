@@ -410,6 +410,7 @@ namespace PolylineNameSpace {
 
     template <Numeric T>
     void Polyline<T>::add_polyline(const Polyline<T>& other){
+        std::cout << "aaaaaaaa";
         if(size_ + other.size_ > capacity_){
             resize(std::max(capacity_ * 2, other.capacity_ * 2));
         }
@@ -419,6 +420,7 @@ namespace PolylineNameSpace {
 
     template <Numeric T>
     void Polyline<T>::add_polyline(Polyline<T>&& other){
+        std::cout << "bbbbbbb";
         if((size_ + other.size_ > capacity_) && (size_ + other.size_ <= other.capacity_)){
             std::move(other.begin(), other.end(), other.begin() + size_);
             std::move(begin(), end(), other.begin());

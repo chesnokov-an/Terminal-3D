@@ -131,6 +131,7 @@ namespace BufferNameSpace {
         template <Numeric T>
         friend Buffer& operator<<(Buffer& buffer, const Polyline<T>& polyline){
             size_t size = polyline.points_count();
+            if(size == 1){ buffer.draw_line(polyline[0], polyline[0]); }
             for(size_t i = 1; i < size; i++){
                 buffer.draw_line(polyline[i - 1], polyline[i]);
             }
