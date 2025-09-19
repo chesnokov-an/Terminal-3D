@@ -24,7 +24,7 @@ make Tests     // Скомпилирует программу Tests
 
 3. Запуск:
 ```bash
-./build/Main/Main    // Запустит программу Dialogue
+./build/Main/Main    // Запустит программу Main
 ./build/Tests/Tests  // Запустит программу Tests
 ```
 

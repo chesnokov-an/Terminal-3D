@@ -45,7 +45,7 @@ namespace PolylineNameSpace {
          * 
          * Formula: sqrt((other.x - x)² + (other.y - y)² + (other.z - z)²)
          */
-        double distance(const Point& other);
+        double distance(const Point& other) const;
     };
 
     /**
@@ -287,7 +287,7 @@ namespace PolylineNameSpace {
     /****************Realization****************/
     /*----------------POINT----------------*/
     template <Numeric T>
-    double Point<T>::distance(const Point<T> &other){
+    double Point<T>::distance(const Point<T> &other) const{
         return std::sqrt((other.x - x)*(other.x - x) + (other.y - y)*(other.y - y) + (other.z - z)*(other.z - z));
     }
 
@@ -499,11 +499,10 @@ namespace PolylineNameSpace {
 
     template <Numeric T>
     double Polyline<T>::length() const{
-        double result = 0;
-        for(size_t i = 1; i < size_; i++){
-            result += dots_[i].distance(dots_[i-1]);
-        }
-        return result;
+        if(size_ < 2){ return 0.0; }    
+        return std::transform_reduce(begin() + 1, end(), begin(), 0, std::plus<>(), [](const auto& current, const auto& previous){
+            return current.distance(previous);
+        });
     }
 
     template <Numeric T>
