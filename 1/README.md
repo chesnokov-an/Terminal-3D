@@ -18,14 +18,19 @@ mkdir build
 cd build
 cmake ..  // Эта команда сгенерирует make-файлы для каждой цели в нашем проекте внутри папки build.
           // Сам проект при этом лежит на одну папку выше.
-make Dialogue  // Скомпилирует программу Dialogue
+make Main      // Скомпилирует программу Main
 make Tests     // Скомпилирует программу Tests
-make Matrix    // Скомпилирует библиотеку Matrix
 ```
 
 3. Запуск:
 ```bash
-./build/Dialogue/Dialogue  // Запустит программу Dialogue
-./build/Tests/Tests        // Запустит программу Tests
+./build/Main/Main    // Запустит программу Dialogue
+./build/Tests/Tests  // Запустит программу Tests
 ```
+
+4. Запуск генерации документации:
+```bash
+doxygen Doxyfile
+```
+Для просмотра документации откройте файл `docs/html/index.html`.
 
