@@ -98,7 +98,7 @@ namespace DialogueNameSpace {
         std::cout << "Введите номер линии которую присоединить (от 1 до " << lines.size() << "): ";
         size_t polyline2_num = get_num<size_t>(1, lines.size());
         lines[polyline1_num - 1].add_polyline(lines[polyline2_num - 1]);
-        lines.erase(lines.begin() + polyline2_num - 1);
+        if(polyline1_num != polyline2_num){ lines.erase(lines.begin() + polyline2_num - 1); }
         std::cout << RED << lines[polyline1_num - 1].points_count() << RESET << std::endl;
     }
 
