@@ -5,6 +5,8 @@
 #include <array>
 #include <numeric>
 
+using namespace PolylineNameSpace;
+
 // ==================== Helper Functions ====================
 
 template <typename MatrixType>
