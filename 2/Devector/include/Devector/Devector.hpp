@@ -45,8 +45,13 @@ private:
         }
     }
     void destroy_n_and_deallocate(size_type n){
+        if (arr_ == nullptr) return;
         destroy_n(n);
         allocator_traits_type::deallocate(get_stored_allocator(), arr_, capacity_);
+        arr_ = nullptr;
+        capacity_ = 0;
+        size_ = 0;
+        front_capacity_ = 0;
     }
 
 public:
@@ -82,7 +87,19 @@ public:
         size_ = new_capacity;
     }
 
-    explicit devector(size_type new_capacity, const allocator_type& allocator = allocator_type()) : devector(new_capacity, value_type(), allocator) {}
+    explicit devector(size_type new_capacity, const allocator_type& allocator = allocator_type()) : devector(new_capacity, reserve_only_tag_t{}, allocator) {
+        size_type index = 0;
+        try{
+            for(; index < new_capacity; ++index){
+                allocator_traits_type::construct(get_stored_allocator(), arr_ + index);
+            }
+        }
+        catch(...){
+            destroy_n_and_deallocate(index);
+            throw;
+        }
+        size_ = new_capacity;
+    }
 
     template<typename ForwardIterator>
     requires std::forward_iterator<ForwardIterator>
@@ -122,7 +139,7 @@ public:
     devector(const devector& other) : devector(other, allocator_traits_type::select_on_container_copy_construction(other.get_stored_allocator())) {}
 
     devector(devector&& other, const allocator_type& allocator) : devector(allocator) {
-        if(allocator == other.get_stored_allocator()){
+        if(get_stored_allocator() == other.get_stored_allocator()){
             std::swap(arr_, other.arr_);
             std::swap(size_, other.size_);
             std::swap(capacity_, other.capacity_);
@@ -152,7 +169,17 @@ public:
         other.front_capacity_ = 0;
     }
 
-    devector(devector&& other) noexcept : devector(other, other.get_stored_allocator()) {}
+    devector(devector&& other) noexcept
+            : Alloc(std::move(other.get_stored_allocator()))
+            , arr_(other.arr_)
+            , size_(other.size_)
+            , capacity_(other.capacity_)
+            , front_capacity_(other.front_capacity_) {
+        other.arr_ = nullptr;
+        other.size_ = 0;
+        other.capacity_ = 0;
+        other.front_capacity_ = 0;
+    }
 
     devector(const std::initializer_list<T>& il, const allocator_type& allocator = allocator_type()) : devector(il.begin(), il.end(), allocator) {}
 
