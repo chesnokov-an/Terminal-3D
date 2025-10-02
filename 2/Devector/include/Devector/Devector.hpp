@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <concepts>
+#include <exception>
 
 namespace DevectorNameSpace{
 
@@ -40,7 +41,7 @@ private:
 private:
     void destroy_n(size_type n){
         for(size_type index = 0; index < n; ++index){
-            allocator_traits_type::destroy(get_stored_allocator(), arr_ + index);
+            allocator_traits_type::destroy(get_stored_allocator(), arr_ + front_capacity_ + index);
         }
     }
     void destroy_n_and_deallocate(size_type n){
@@ -144,7 +145,7 @@ public:
         }
         arr_ = newarr;
         size_ = other.size_;
-        capacity_ = other.size_;
+        capacity_ = size_;
         other.arr_ = nullptr;
         other.size_ = 0;
         other.capacity_ = 0;
@@ -156,31 +157,96 @@ public:
     devector(const std::initializer_list<T>& il, const allocator_type& allocator = allocator_type()) : devector(il.begin(), il.end(), allocator) {}
 
     devector& operator=(const devector& other){
-        if(*this == other) return *this;
+        if(this == &other) return *this;
         allocator_type new_allocator = propagate_on_container_copy_assignment::value ? other.get_stored_allocator() : get_stored_allocator();
-        pointer newarr = allocator_traits_type::allocate(new_allocator, other.capacity_);
+        pointer newarr = allocator_traits_type::allocate(new_allocator, other.size_);
         size_type index = 0;
         try{
             for(; index < other.size_; ++index){
-                allocator_traits_type::construct(new_allocator, newarr + index, *(other.arr_ + index));
+                allocator_traits_type::construct(new_allocator, newarr + index, other[index]);
             }
         }
         catch(...){
             for(size_type constructed_index = 0; constructed_index < index; ++constructed_index){
                 allocator_traits_type::destroy(new_allocator, newarr + constructed_index);
             }
-            allocator_traits_type::deallocate(new_allocator, newarr, other.capacity_);
+            allocator_traits_type::deallocate(new_allocator, newarr, other.size_);
             throw;
         }
         destroy_n_and_deallocate(size_);
         get_stored_allocator() = new_allocator;
         arr_ = newarr;
         size_ = other.size_;
-        capacity_ = other.capacity_;
-        front_capacity_ = other.front_capacity_;
+        capacity_ = size_;
+        front_capacity_ = 0;
         return *this;
     }
-    
+
+    devector& operator=(devector&& other) noexcept(propagate_on_container_move_assignment::value || is_always_equal::value){
+        if(propagate_on_container_move_assignment::value || get_stored_allocator() == other.get_stored_allocator()){
+            if constexpr (propagate_on_container_move_assignment::value){
+                get_stored_allocator() = std::move(other.get_stored_allocator());
+            }
+            std::swap(arr_, other.arr_);
+            std::swap(size_, other.size_);
+            std::swap(capacity_, other.capacity_);
+            std::swap(front_capacity_, other.front_capacity_);
+            return *this;
+        }
+        pointer newarr = allocator_traits_type::allocate(get_stored_allocator(), other.size_);
+        size_type index = 0;
+        try{
+            for(; index < other.size_; ++index){
+                allocator_traits_type::construct(get_stored_allocator(), newarr + index, std::move(other[index]));
+            }
+        }
+        catch(...){
+            for(size_type constructed_index = 0; constructed_index < index; ++constructed_index){
+                allocator_traits_type::destroy(get_stored_allocator(), newarr + constructed_index);
+            }
+            allocator_traits_type::deallocate(get_stored_allocator(), newarr, other.size_);
+            throw;
+        }
+        destroy_n_and_deallocate(size_);
+        arr_ = newarr;
+        size_ = other.size_;
+        capacity_ = size_;
+        front_capacity_ = 0;
+        other.arr_ = nullptr;
+        other.size_ = 0;
+        other.capacity_ = 0;
+        other.front_capacity_ = 0;
+        return *this;
+    }
+
+    devector& operator=(std::initializer_list<T> il){
+        size_type new_size = il.size();
+        pointer newarr = allocator_traits_type::allocate(get_stored_allocator(), new_size);
+        size_type index = 0;
+        try{
+            for(auto it = il.begin(), end = il.end(); it != end; ++it, ++index){
+                allocator_traits_type::construct(get_stored_allocator(), newarr + index, *it);
+            }
+        }
+        catch(...){
+            for(size_type constructed_index = 0; constructed_index < index; ++constructed_index){
+                allocator_traits_type::destroy(get_stored_allocator(), newarr + constructed_index);
+            }
+            allocator_traits_type::deallocate(get_stored_allocator(), newarr, new_size);
+            throw;
+        }
+        destroy_n_and_deallocate(size_);
+        arr_ = newarr;
+        size_ = new_size;
+        capacity_ = size_;
+        front_capacity_ = 0;
+        return *this;
+    }
+
+    ~devector(){
+        if(arr_ == nullptr) return;
+        destroy_n_and_deallocate(size_);
+    }
 
     // public member functions
     allocator_type get_allocator() const noexcept{
@@ -199,11 +265,11 @@ public:
         return arr_[front_capacity_ + index];
     }
     reference at(size_type index){
-        if(index >= size_) throw std::out_of_range();
+        if(index >= size_) throw std::out_of_range("");
         return (*this)[index];
     }
     const_reference at(size_type index) const{
-        if(index >= size_) throw std::out_of_range();
+        if(index >= size_) throw std::out_of_range("");
         return (*this)[index];
     }
     reference front() noexcept{
