@@ -249,6 +249,64 @@ public:
     }
 
     // public member functions
+    iterator begin() noexcept{
+        return &arr_[front_capacity_];
+    }
+    const_iterator begin() const noexcept{
+        return &arr_[front_capacity_];
+    }
+    iterator end() noexcept{
+        return &arr_[front_capacity_ + size_];
+    }
+    const_iterator end() const noexcept{
+        return &arr_[front_capacity_ + size_];
+    }
+    reverse_iterator rbegin() noexcept{
+        return std::reverse_iterator<iterator>(end());
+    }
+    const_reverse_iterator rbegin() const noexcept{
+        return std::reverse_iterator<const_iterator>(end());
+    }
+    reverse_iterator rend() noexcept{
+        return std::reverse_iterator<iterator>(begin());
+    }
+    const_reverse_iterator rend() const noexcept{
+        return std::reverse_iterator<const_iterator>(begin());
+    }
+    const_iterator cbegin() const noexcept{
+        return begin();
+    }
+    const_iterator cend() const noexcept{
+        return end();
+    }
+    const_reverse_iterator crbegin() const noexcept{
+        return rbegin();
+    }
+    const_reverse_iterator crend() const noexcept{
+        return rend();
+    }
+    bool empty() const noexcept{
+        return (size() == 0);
+    }
+    size_type size() const noexcept{
+        return size_;
+    }
+    size_type max_size() const noexcept{
+        return allocator_traits_type::max_size(get_stored_allocator());
+    }
+    size_type capacity() const noexcept{
+        return capacity_;
+    }
+    size_type front_free_capacity() const noexcept{
+        return front_capacity_;
+    }
+    size_type back_free_capacity() const noexcept{
+        return capacity_ - (front_capacity_ + size_);
+    }
+
+
+
+
     allocator_type get_allocator() const noexcept{
         return static_cast<const allocator_type&>(*this);
     }
