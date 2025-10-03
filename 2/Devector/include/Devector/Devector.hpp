@@ -87,7 +87,8 @@ public:
         size_ = new_capacity;
     }
 
-    explicit devector(size_type new_capacity, const allocator_type& allocator = allocator_type()) : devector(new_capacity, reserve_only_tag_t{}, allocator) {
+    explicit devector(size_type new_capacity, const allocator_type& allocator = allocator_type()) 
+            : devector(new_capacity, reserve_only_tag_t{}, allocator) {
         size_type index = 0;
         try{
             for(; index < new_capacity; ++index){
@@ -103,7 +104,7 @@ public:
 
     template<typename ForwardIterator>
     requires std::forward_iterator<ForwardIterator>
-    devector(ForwardIterator first, ForwardIterator last, const allocator_type & allocator = allocator_type()) 
+    devector(ForwardIterator first, ForwardIterator last, const allocator_type& allocator = allocator_type()) 
             : devector(static_cast<size_type>(std::distance(first, last)), reserve_only_tag_t{}, allocator){
         size_type index = 0;
         try{
@@ -232,7 +233,12 @@ public:
                 allocator_traits_type::destroy(get_stored_allocator(), newarr + constructed_index);
             }
             allocator_traits_type::deallocate(get_stored_allocator(), newarr, other.size_);
-            throw;
+            if constexpr (propagate_on_container_move_assignment::value || is_always_equal::value){
+                std::terminate();
+            }
+            else{
+                throw;
+            }
         }
         destroy_n_and_deallocate(size_);
         arr_ = newarr;
@@ -276,6 +282,33 @@ public:
     }
 
     // public member functions
+    template<typename InputIterator> 
+    void assign(InputIterator first, InputIterator last){
+        devector tmp = devector(first, last, get_stored_allocator());
+        std::swap(arr_, tmp.arr_);
+        std::swap(size_, tmp.size_);
+        std::swap(capacity_, tmp.capacity_);
+        std::swap(front_capacity_, tmp.front_capacity_);
+    }
+    void assign(size_type new_capacity, const_reference value){
+        devector tmp = devector(new_capacity, value, get_stored_allocator());
+        std::swap(arr_, tmp.arr_);
+        std::swap(size_, tmp.size_);
+        std::swap(capacity_, tmp.capacity_);
+        std::swap(front_capacity_, tmp.front_capacity_);
+    }
+    void assign(std::initializer_list<T> il){
+        assign(il.begin(), il.end());
+    }
+    allocator_type get_allocator() const noexcept{
+        return static_cast<const allocator_type&>(*this);
+    }
+    const allocator_type& get_stored_allocator() const noexcept{
+        return static_cast<const allocator_type&>(*this);
+    }
+    allocator_type& get_stored_allocator() noexcept{
+        return static_cast<allocator_type&>(*this);
+    }
     iterator begin() noexcept{
         return &arr_[front_capacity_];
     }
@@ -330,19 +363,41 @@ public:
     size_type back_free_capacity() const noexcept{
         return capacity_ - (front_capacity_ + size_);
     }
+    
 
 
-
-
-    allocator_type get_allocator() const noexcept{
-        return static_cast<const allocator_type&>(*this);
+    void resize(size_type new_size){
+        resize_back(new_size);
     }
-    const allocator_type& get_stored_allocator() const noexcept{
-        return static_cast<const allocator_type&>(*this);
+    void resize(size_type new_size, const_reference value){
+        resize_back(new_size, value);
     }
-    allocator_type& get_stored_allocator() noexcept{
-        return static_cast<allocator_type&>(*this);
+    void resize_front(size_type new_size, const_reference value){
+        if (new_size < size_) {
+            erase(begin(), begin() + (size_ - new_size));
+            return;
+        }
+        insert(begin(), new_size - size_, value);
     }
+    void resize_front(size_type new_size){
+        resize_front(new_size, value_type{});
+    }
+    void resize_back(size_type new_size, const_reference value){
+        if (new_size < size_) {
+            erase(begin() + (size_ - new_size), end());
+            return;
+        }
+        insert(begin() + size_, new_size - size_, value);
+    }
+    void resize_back(size_type new_size){
+        resize_back(new_size, value_type{});
+    }
+
+
+
+
+
+
     reference operator[](size_type index) noexcept{
         return arr_[front_capacity_ + index];
     }
@@ -369,6 +424,12 @@ public:
     const_reference back() const noexcept{
         return (*this)[size_ - 1];
     }
+    pointer data() noexcept{
+        return arr_ + front_capacity_;
+    }
+    const_pointer data() const noexcept{
+        return arr_ + front_capacity_;
+    }
 
     // void swap(devector& other) noexcept(propagate_on_container_swap::value || is_always_equal::value){
     //     if constexpr (propagate_on_container_copy_assignment::value){
@@ -379,6 +440,13 @@ public:
     //     std::swap(capacity_, other.capacity_);
     //     std::swap(front_capacity_, other.front_capacity_);
     // }
+
+
+    void clear() noexcept{
+        destroy_n(size_);
+        size_ = 0;
+        front_capacity_ = 0;
+    }
 };
 
 }
