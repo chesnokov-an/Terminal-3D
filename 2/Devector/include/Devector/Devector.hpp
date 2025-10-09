@@ -74,59 +74,26 @@ public:
 
     devector(size_type new_capacity, const_reference value, const allocator_type& allocator = allocator_type())
             : devector(new_capacity, reserve_only_tag_t{}, allocator) {
-        size_type index = 0;
-        try{
-            for(; index < new_capacity; ++index){
-                allocator_traits_type::construct(get_stored_allocator(), arr_ + index, value);
-            }
-        }
-        catch(...){
-            destroy_n_and_deallocate(index);
-            throw;
-        }
+        std::uninitialized_fill_n(arr_, new_capacity, value);
         size_ = new_capacity;
     }
 
     explicit devector(size_type new_capacity, const allocator_type& allocator = allocator_type()) 
-            : devector(new_capacity, reserve_only_tag_t{}, allocator) {
-        size_type index = 0;
-        try{
-            for(; index < new_capacity; ++index){
-                allocator_traits_type::construct(get_stored_allocator(), arr_ + index);
-            }
-        }
-        catch(...){
-            destroy_n_and_deallocate(index);
-            throw;
-        }
-        size_ = new_capacity;
-    }
+            : devector(new_capacity, value_type{}, allocator) {}
 
     template<typename ForwardIterator>
     requires std::forward_iterator<ForwardIterator>
     devector(ForwardIterator first, ForwardIterator last, const allocator_type& allocator = allocator_type()) 
             : devector(static_cast<size_type>(std::distance(first, last)), reserve_only_tag_t{}, allocator){
-        size_type index = 0;
-        try{
-            for(; index < capacity_; ++index, ++first){
-                allocator_traits_type::construct(get_stored_allocator(), arr_ + index, *first);
-            }
-        }
-        catch(...){
-            destroy_n_and_deallocate(index);
-            throw;
-        }
+        std::uninitialized_copy_n(first, capacity_, arr_);
         size_ = capacity_;
     }
 
     template<typename InputIterator>
     requires std::input_iterator<InputIterator> && (!std::forward_iterator<InputIterator>)
-    devector(InputIterator first, InputIterator last, const allocator_type& allocator = allocator_type())
-            : devector(allocator) {
+    devector(InputIterator first, InputIterator last, const allocator_type& allocator = allocator_type()) : devector(allocator) {
         try{
-            for (; first != last; ++first) {
-                push_back(*first);
-            }
+            std::copy(first, last, std::back_inserter(*this));
         }
         catch(...){
             destroy_n_and_deallocate(size_);
@@ -139,6 +106,8 @@ public:
 
     devector(const devector& other) : devector(other, allocator_traits_type::select_on_container_copy_construction(other.get_stored_allocator())) {}
 
+    // До сюда дошли по проверке
+
     devector(devector&& other, const allocator_type& allocator) : devector(allocator) {
         if(get_stored_allocator() == other.get_stored_allocator()){
             std::swap(arr_, other.arr_);
@@ -148,26 +117,22 @@ public:
             return;
         }
         pointer newarr = allocator_traits_type::allocate(get_stored_allocator(), other.size_);
-        size_type index = 0;
         try{
-            for(; index < other.size_; ++index){
-                allocator_traits_type::construct(get_stored_allocator(), newarr + index, std::move(other[index]));
-            }
+            std::uninitialized_move_n(other.begin(), other.size_, newarr);
         }
         catch(...){
-            for(size_type constructed_index = 0; constructed_index < index; ++constructed_index){
-                allocator_traits_type::destroy(get_stored_allocator(), newarr + constructed_index);
-            }
             allocator_traits_type::deallocate(get_stored_allocator(), newarr, other.size_);
             throw;
         }
         arr_ = newarr;
         size_ = other.size_;
         capacity_ = size_;
-        other.arr_ = nullptr;
+        other.clear();
+        allocator_traits_type::deallocate(other.get_stored_allocator(), other.arr_, other.capacity_);
         other.size_ = 0;
         other.capacity_ = 0;
         other.front_capacity_ = 0;
+        other.arr_ = nullptr;
     }
 
     devector(devector&& other) noexcept
@@ -182,22 +147,17 @@ public:
         other.front_capacity_ = 0;
     }
 
-    devector(const std::initializer_list<T>& il, const allocator_type& allocator = allocator_type()) : devector(il.begin(), il.end(), allocator) {}
+    devector(const std::initializer_list<T>& il, const allocator_type& allocator = allocator_type())
+            : devector(il.begin(), il.end(), allocator) {}
 
     devector& operator=(const devector& other){
         if(this == &other) return *this;
         allocator_type new_allocator = propagate_on_container_copy_assignment::value ? other.get_stored_allocator() : get_stored_allocator();
         pointer newarr = allocator_traits_type::allocate(new_allocator, other.size_);
-        size_type index = 0;
         try{
-            for(; index < other.size_; ++index){
-                allocator_traits_type::construct(new_allocator, newarr + index, other[index]);
-            }
+            std::uninitialized_copy_n(other.begin(), other.size_, newarr);
         }
         catch(...){
-            for(size_type constructed_index = 0; constructed_index < index; ++constructed_index){
-                allocator_traits_type::destroy(new_allocator, newarr + constructed_index);
-            }
             allocator_traits_type::deallocate(new_allocator, newarr, other.size_);
             throw;
         }
@@ -277,7 +237,6 @@ public:
     }
 
     ~devector(){
-        if(arr_ == nullptr) return;
         destroy_n_and_deallocate(size_);
     }
 
@@ -285,17 +244,11 @@ public:
     template<typename InputIterator> 
     void assign(InputIterator first, InputIterator last){
         devector tmp = devector(first, last, get_stored_allocator());
-        std::swap(arr_, tmp.arr_);
-        std::swap(size_, tmp.size_);
-        std::swap(capacity_, tmp.capacity_);
-        std::swap(front_capacity_, tmp.front_capacity_);
+        swap(tmp);
     }
     void assign(size_type new_capacity, const_reference value){
         devector tmp = devector(new_capacity, value, get_stored_allocator());
-        std::swap(arr_, tmp.arr_);
-        std::swap(size_, tmp.size_);
-        std::swap(capacity_, tmp.capacity_);
-        std::swap(front_capacity_, tmp.front_capacity_);
+        swap(tmp);
     }
     void assign(std::initializer_list<T> il){
         assign(il.begin(), il.end());
@@ -431,16 +384,20 @@ public:
         return arr_ + front_capacity_;
     }
 
-    // void swap(devector& other) noexcept(propagate_on_container_swap::value || is_always_equal::value){
-    //     if constexpr (propagate_on_container_copy_assignment::value){
-    //         get_stored_allocator() = other.get_stored_allocator();
-    //     }
-    //     std::swap(arr_, other.arr_);
-    //     std::swap(size_, other.size_);
-    //     std::swap(capacity_, other.capacity_);
-    //     std::swap(front_capacity_, other.front_capacity_);
-    // }
-
+    void swap(devector& other) noexcept(propagate_on_container_swap::value || is_always_equal::value){
+        if constexpr (propagate_on_container_swap::value){
+            std::swap(get_stored_allocator(), other.get_stored_allocator());
+        }
+        else if constexpr (!is_always_equal::value){
+            if(get_stored_allocator() != other.get_stored_allocator()){
+                std::terminate();
+            }
+        }
+        std::swap(arr_, other.arr_);
+        std::swap(size_, other.size_);
+        std::swap(capacity_, other.capacity_);
+        std::swap(front_capacity_, other.front_capacity_);
+    }
 
     void clear() noexcept{
         destroy_n(size_);
