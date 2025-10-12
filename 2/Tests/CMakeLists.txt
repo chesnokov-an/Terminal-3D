@@ -3,6 +3,9 @@ project(Tests)
 
 set(CMAKE_CXX_STANDARD 23)
 
+add_compile_options(--coverage)
+add_link_options(--coverage)
+
 if(UNIX)
     set(gtest_source_url https://github.com/google/googletest/archive/release-1.11.0.tar.gz)
 elseif(WIN32)

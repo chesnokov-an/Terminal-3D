@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdexcept>
 #include <Devector/Devector.hpp>
+#include <vector>
 
 using namespace DevectorNameSpace;
 
@@ -122,12 +123,12 @@ TEST_F(DevectorTest, MoveConstructor) {
 }
 
 TEST_F(DevectorTest, MoveConstructorWithAllocator) {
-    devector<int> original(5, 42);
-    devector<int> moved(std::move(original), std::allocator<int>());
+    devector<std::vector<int>> original(5, std::vector<int>{1, 2, 3});
+    devector<std::vector<int>> moved(std::move(original), std::allocator<std::vector<int>>());
     
     EXPECT_EQ(moved.size(), 5);
     for (size_t i = 0; i < 5; ++i) {
-        EXPECT_EQ(moved[i], 42);
+        EXPECT_EQ(moved[i], (std::vector<int>{1, 2, 3}));
     }
 }
 
@@ -582,22 +583,22 @@ TEST_F(DevectorTest, MaxSize) {
 //     EXPECT_EQ(v[0], "hello");
 // }
 
-// TEST_F(DevectorTest, UniquePtrVector) {
-//     devector<std::unique_ptr<int>> v;
-//     v.push_back(std::make_unique<int>(42));
-//     v.push_back(std::make_unique<int>(24));
+TEST_F(DevectorTest, UniquePtrVector) {
+    devector<std::unique_ptr<int>> v;
+    v.push_back(std::make_unique<int>(42));
+    v.push_back(std::make_unique<int>(24));
     
-//     EXPECT_EQ(v.size(), 2);
-//     EXPECT_EQ(*v[0], 42);
-//     EXPECT_EQ(*v[1], 24);
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(*v[0], 42);
+    EXPECT_EQ(*v[1], 24);
     
-//     // Move should work
-//     devector<std::unique_ptr<int>> moved = std::move(v);
-//     EXPECT_EQ(v.size(), 0);
-//     EXPECT_EQ(moved.size(), 2);
-//     EXPECT_EQ(*moved[0], 42);
-//     EXPECT_EQ(*moved[1], 24);
-// }
+    // Move should work
+    devector<std::unique_ptr<int>> moved = std::move(v);
+    EXPECT_EQ(v.size(), 0);
+    EXPECT_EQ(moved.size(), 2);
+    EXPECT_EQ(*moved[0], 42);
+    EXPECT_EQ(*moved[1], 24);
+}
 
 // Self-assignment tests
 TEST_F(DevectorTest, SelfCopyAssignment) {
@@ -618,4 +619,251 @@ TEST_F(DevectorTest, SelfMoveAssignment) {
     // Should remain in valid state (implementation defined)
     // At minimum, shouldn't crash
     EXPECT_TRUE(v.size() == 3 || v.size() == 0);
+}
+
+// Тесты для разных аллокаторов
+template<typename T>
+class StatefulAllocator {
+public:
+    using value_type = T;
+    using propagate_on_container_copy_assignment = std::false_type;
+    using propagate_on_container_move_assignment = std::false_type;
+    using propagate_on_container_swap = std::false_type;
+    using is_always_equal = std::false_type;
+
+    int id;
+
+    StatefulAllocator(int id = 0) noexcept : id(id) {}
+
+    template<typename U>
+    StatefulAllocator(const StatefulAllocator<U>& other) noexcept : id(other.id) {}
+
+    T* allocate(std::size_t n) {
+        return std::allocator<T>().allocate(n);
+    }
+
+    void deallocate(T* p, std::size_t n) {
+        std::allocator<T>().deallocate(p, n);
+    }
+
+    bool operator==(const StatefulAllocator& other) const noexcept {
+        return id == other.id;
+    }
+
+    bool operator!=(const StatefulAllocator& other) const noexcept {
+        return id != other.id;
+    }
+};
+
+// Тест на перемещение с разными аллокаторами
+TEST_F(DevectorTest, MoveConstructorWithDifferentAllocators) {
+    devector<int, StatefulAllocator<int>> original(5, 42, StatefulAllocator<int>(1));
+    devector<int, StatefulAllocator<int>> moved(std::move(original), StatefulAllocator<int>(2));
+    
+    EXPECT_EQ(moved.size(), 5);
+    for (size_t i = 0; i < 5; ++i) {
+        EXPECT_EQ(moved[i], 42);
+    }
+}
+
+// Тест на перемещающее присваивание с разными аллокаторами
+TEST_F(DevectorTest, MoveAssignmentWithDifferentAllocators) {
+    devector<int, StatefulAllocator<int>> original(5, 42, StatefulAllocator<int>(1));
+    devector<int, StatefulAllocator<int>> target(2, 10, StatefulAllocator<int>(2));
+    
+    target = std::move(original);
+    
+    EXPECT_EQ(target.size(), 5);
+    for (size_t i = 0; i < 5; ++i) {
+        EXPECT_EQ(target[i], 42);
+    }
+}
+
+// // Тест на swap с разными аллокаторами (должен завершаться аварийно)
+// TEST_F(DevectorTest, SwapWithDifferentAllocatorsTerminates) {
+//     devector<int, StatefulAllocator<int>> v1(3, 1, StatefulAllocator<int>(1));
+//     devector<int, StatefulAllocator<int>> v2(3, 2, StatefulAllocator<int>(2));
+    
+//     EXPECT_DEATH(v1.swap(v2), "");
+// }
+
+// Тест на swap с одинаковыми аллокаторами
+TEST_F(DevectorTest, SwapWithSameAllocators) {
+    StatefulAllocator<int> alloc(1);
+    devector<int, StatefulAllocator<int>> v1(3, 1, alloc);
+    devector<int, StatefulAllocator<int>> v2(3, 2, alloc);
+    
+    v1.swap(v2);
+    
+    EXPECT_EQ(v1.size(), 3);
+    EXPECT_EQ(v2.size(), 3);
+    for (size_t i = 0; i < 3; ++i) {
+        EXPECT_EQ(v1[i], 2);
+        EXPECT_EQ(v2[i], 1);
+    }
+}
+
+// Тест на propagate_on_container_copy_assignment = true
+template<typename T>
+struct PropagatingAllocator {
+    using value_type = T;
+    using propagate_on_container_copy_assignment = std::true_type;
+    using propagate_on_container_move_assignment = std::true_type;
+    using propagate_on_container_swap = std::true_type;
+    using is_always_equal = std::false_type;
+
+    int id;
+
+    PropagatingAllocator(int id = 0) noexcept : id(id) {}
+
+    template<typename U>
+    PropagatingAllocator(const PropagatingAllocator<U>& other) noexcept : id(other.id) {}
+
+    T* allocate(std::size_t n) {
+        return std::allocator<T>().allocate(n);
+    }
+
+    void deallocate(T* p, std::size_t n) {
+        std::allocator<T>().deallocate(p, n);
+    }
+
+    bool operator==(const PropagatingAllocator& other) const noexcept {
+        return id == other.id;
+    }
+
+    bool operator!=(const PropagatingAllocator& other) const noexcept {
+        return id != other.id;
+    }
+};
+
+// Тест на копирующее присваивание с propagate_on_container_copy_assignment = true
+TEST_F(DevectorTest, CopyAssignmentWithPropagatingAllocator) {
+    devector<int, PropagatingAllocator<int>> original(5, 42, PropagatingAllocator<int>(1));
+    devector<int, PropagatingAllocator<int>> copy(2, 10, PropagatingAllocator<int>(2));
+    
+    copy = original;
+    
+    EXPECT_EQ(copy.size(), 5);
+    for (size_t i = 0; i < 5; ++i) {
+        EXPECT_EQ(copy[i], 42);
+    }
+    // Аллокатор должен был скопироваться
+    EXPECT_EQ(copy.get_stored_allocator().id, 1);
+}
+
+// Тест на перемещающее присваивание с propagate_on_container_move_assignment = true
+TEST_F(DevectorTest, MoveAssignmentWithPropagatingAllocator) {
+    devector<int, PropagatingAllocator<int>> original(5, 42, PropagatingAllocator<int>(1));
+    devector<int, PropagatingAllocator<int>> target(2, 10, PropagatingAllocator<int>(2));
+    
+    target = std::move(original);
+    
+    EXPECT_EQ(target.size(), 5);
+    for (size_t i = 0; i < 5; ++i) {
+        EXPECT_EQ(target[i], 42);
+    }
+    // Аллокатор должен был переместиться
+    EXPECT_EQ(target.get_stored_allocator().id, 1);
+}
+
+// Тест на swap с propagate_on_container_swap = true
+TEST_F(DevectorTest, SwapWithPropagatingAllocator) {
+    devector<int, PropagatingAllocator<int>> v1(3, 1, PropagatingAllocator<int>(1));
+    devector<int, PropagatingAllocator<int>> v2(3, 2, PropagatingAllocator<int>(2));
+    
+    v1.swap(v2);
+    
+    EXPECT_EQ(v1.size(), 3);
+    EXPECT_EQ(v2.size(), 3);
+    for (size_t i = 0; i < 3; ++i) {
+        EXPECT_EQ(v1[i], 2);
+        EXPECT_EQ(v2[i], 1);
+    }
+    // Аллокаторы должны были обменяться
+    EXPECT_EQ(v1.get_stored_allocator().id, 2);
+    EXPECT_EQ(v2.get_stored_allocator().id, 1);
+}
+
+// Тест на конструктор с итераторами для input iterator с исключением
+// TEST_F(DevectorTest, InputIteratorConstructorWithException) {
+//     struct ThrowingInputIterator {
+//         using iterator_category = std::input_iterator_tag;
+//         using value_type = int;
+//         using difference_type = std::ptrdiff_t;
+//         using pointer = int*;
+//         using reference = int&;
+        
+//         int count;
+//         int max_before_throw;
+        
+//         ThrowingInputIterator(int max_throw) : count(0), max_before_throw(max_throw) {}
+        
+//         ThrowingInputIterator& operator++() {
+//             ++count;
+//             if (count >= max_before_throw) {
+//                 throw std::runtime_error("Test exception");
+//             }
+//             return *this;
+//         }
+        
+//         ThrowingInputIterator operator++(int) {
+//             ThrowingInputIterator tmp = *this;
+//             ++(*this);
+//             return tmp;
+//         }
+        
+//         int operator*() const {
+//             return count;
+//         }
+        
+//         bool operator==(const ThrowingInputIterator& other) const {
+//             return count == other.count;
+//         }
+//     };
+    
+//     ThrowingInputIterator begin(3), end(5);
+    
+//     devector<int> v;
+//     EXPECT_THROW(v.assign(begin, end), std::runtime_error);
+// }
+
+// Тест на само-перемещающее присваивание
+TEST_F(DevectorTest, SelfMoveAssignmentWithNonEqualAllocators) {
+    devector<int, StatefulAllocator<int>> v(3, 42, StatefulAllocator<int>(1));
+    
+    // Это не должно приводить к неопределенному поведению
+    v = std::move(v);
+    
+    // Контейнер должен остаться в валидном состоянии
+    EXPECT_GE(v.size(), 0);
+}
+
+// Тест на empty в destroy_n_and_deallocate
+TEST_F(DevectorTest, DestroyEmptyDevector) {
+    devector<int> v;
+    // Не должно падать при разрушении пустого контейнера
+}
+
+// Тест на итераторы с непустым front_free_capacity
+TEST_F(DevectorTest, IteratorsWithFrontCapacity) {
+    devector<int> v(3, 7, reserve_only_tag_t{});
+    v.assign({1, 2, 3});
+    
+    EXPECT_EQ(v.front_free_capacity(), 0);
+    EXPECT_EQ(v.size(), 3);
+    
+    int expected = 1;
+    for (auto it = v.begin(); it != v.end(); ++it) {
+        EXPECT_EQ(*it, expected++);
+    }
+}
+
+// Тест на data() с front_capacity
+TEST_F(DevectorTest, DataWithFrontCapacity) {
+    devector<int> v(2, 3, reserve_only_tag_t{});
+    v.assign({1, 2, 3});
+    
+    EXPECT_EQ(*v.data(), 1);
+    EXPECT_EQ(v.data()[1], 2);
+    EXPECT_EQ(v.data()[2], 3);
 }

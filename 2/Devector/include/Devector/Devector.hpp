@@ -4,6 +4,7 @@
 #include <memory>
 #include <concepts>
 #include <exception>
+#include <algorithm>
 
 namespace DevectorNameSpace{
 
@@ -12,25 +13,26 @@ struct reserve_only_tag_t {};
 template<typename T, typename Alloc = std::allocator<T>>
 class devector final : private Alloc {
 public:
-    typedef T                                                                  value_type;
-    typedef Alloc                                                              allocator_type;
-    typedef std::allocator_traits<allocator_type>                              allocator_traits_type;
-    typedef allocator_type                                                     stored_allocator_type;
-    typedef typename std::allocator_traits<allocator_type>::pointer            pointer;
-    typedef typename std::allocator_traits<allocator_type>::const_pointer      const_pointer;
-    typedef value_type&                                                        reference;
-    typedef const value_type&                                                  const_reference;
-    typedef typename std::allocator_traits<allocator_type>::size_type          size_type;
-    typedef typename std::allocator_traits<allocator_type>::difference_type    difference_type;
-    typedef pointer                                                            iterator;
-    typedef const_pointer                                                      const_iterator;
-    typedef std::reverse_iterator<iterator>                                    reverse_iterator;
-    typedef std::reverse_iterator<const_iterator>                              const_reverse_iterator;
+    using value_type =                                  T;
+    using allocator_type =                              Alloc;
+    using allocator_traits_type =                       std::allocator_traits<allocator_type>;
+    using stored_allocator_type =                       allocator_type;
+    using pointer =                                     typename std::allocator_traits<allocator_type>::pointer;
+    using const_pointer =                               typename std::allocator_traits<allocator_type>::const_pointer;
+    using reference =                                   value_type&;
+    using const_reference =                             const value_type&;
+    using size_type =                                   typename std::allocator_traits<allocator_type>::size_type;
+    using difference_type =                             typename std::allocator_traits<allocator_type>::difference_type;
+    using iterator =                                    pointer;
+    using const_iterator =                              const_pointer;
+    using reverse_iterator =                            std::reverse_iterator<iterator>;
+    using const_reverse_iterator =                      std::reverse_iterator<const_iterator>;
 
-    typedef typename std::allocator_traits<allocator_type>::propagate_on_container_copy_assignment    propagate_on_container_copy_assignment;
-    typedef typename std::allocator_traits<allocator_type>::propagate_on_container_move_assignment    propagate_on_container_move_assignment;
-    typedef typename std::allocator_traits<allocator_type>::propagate_on_container_swap               propagate_on_container_swap;
-    typedef typename std::allocator_traits<allocator_type>::is_always_equal                           is_always_equal;
+private:
+    using propagate_on_container_copy_assignment =      typename std::allocator_traits<allocator_type>::propagate_on_container_copy_assignment;
+    using propagate_on_container_move_assignment =      typename std::allocator_traits<allocator_type>::propagate_on_container_move_assignment;
+    using propagate_on_container_swap =                 typename std::allocator_traits<allocator_type>::propagate_on_container_swap;
+    using is_always_equal =                             typename std::allocator_traits<allocator_type>::is_always_equal;
 
 private:
     pointer arr_;
@@ -49,8 +51,8 @@ private:
         destroy_n(n);
         allocator_traits_type::deallocate(get_stored_allocator(), arr_, capacity_);
         arr_ = nullptr;
-        capacity_ = 0;
         size_ = 0;
+        capacity_ = 0;
         front_capacity_ = 0;
     }
 
@@ -127,12 +129,7 @@ public:
         arr_ = newarr;
         size_ = other.size_;
         capacity_ = size_;
-        other.clear();
-        allocator_traits_type::deallocate(other.get_stored_allocator(), other.arr_, other.capacity_);
-        other.size_ = 0;
-        other.capacity_ = 0;
-        other.front_capacity_ = 0;
-        other.arr_ = nullptr;
+        other.destroy_n_and_deallocate(other.size_);
     }
 
     devector(devector&& other) noexcept
@@ -166,12 +163,12 @@ public:
         arr_ = newarr;
         size_ = other.size_;
         capacity_ = size_;
-        front_capacity_ = 0;
         return *this;
     }
 
     devector& operator=(devector&& other) noexcept(propagate_on_container_move_assignment::value || is_always_equal::value){
-        if(propagate_on_container_move_assignment::value || get_stored_allocator() == other.get_stored_allocator()){
+        if(this == &other){ return *this; }
+        if(propagate_on_container_move_assignment::value || get_stored_allocator() == other.get_stored_allocator() || is_always_equal::value){
             if constexpr (propagate_on_container_move_assignment::value){
                 get_stored_allocator() = std::move(other.get_stored_allocator());
             }
@@ -182,57 +179,23 @@ public:
             return *this;
         }
         pointer newarr = allocator_traits_type::allocate(get_stored_allocator(), other.size_);
-        size_type index = 0;
         try{
-            for(; index < other.size_; ++index){
-                allocator_traits_type::construct(get_stored_allocator(), newarr + index, std::move(other[index]));
-            }
+            std::uninitialized_move_n(other.begin(), other.size_, newarr);
         }
         catch(...){
-            for(size_type constructed_index = 0; constructed_index < index; ++constructed_index){
-                allocator_traits_type::destroy(get_stored_allocator(), newarr + constructed_index);
-            }
             allocator_traits_type::deallocate(get_stored_allocator(), newarr, other.size_);
-            if constexpr (propagate_on_container_move_assignment::value || is_always_equal::value){
-                std::terminate();
-            }
-            else{
-                throw;
-            }
+            throw;
         }
         destroy_n_and_deallocate(size_);
         arr_ = newarr;
         size_ = other.size_;
         capacity_ = size_;
-        front_capacity_ = 0;
-        other.arr_ = nullptr;
-        other.size_ = 0;
-        other.capacity_ = 0;
-        other.front_capacity_ = 0;
+        other.destroy_n_and_deallocate(other.size_);
         return *this;
     }
 
     devector& operator=(std::initializer_list<T> il){
-        size_type new_size = il.size();
-        pointer newarr = allocator_traits_type::allocate(get_stored_allocator(), new_size);
-        size_type index = 0;
-        try{
-            for(auto it = il.begin(), end = il.end(); it != end; ++it, ++index){
-                allocator_traits_type::construct(get_stored_allocator(), newarr + index, *it);
-            }
-        }
-        catch(...){
-            for(size_type constructed_index = 0; constructed_index < index; ++constructed_index){
-                allocator_traits_type::destroy(get_stored_allocator(), newarr + constructed_index);
-            }
-            allocator_traits_type::deallocate(get_stored_allocator(), newarr, new_size);
-            throw;
-        }
-        destroy_n_and_deallocate(size_);
-        arr_ = newarr;
-        size_ = new_size;
-        capacity_ = size_;
-        front_capacity_ = 0;
+        assign(il.begin(), il.end());
         return *this;
     }
 
@@ -316,40 +279,173 @@ public:
     size_type back_free_capacity() const noexcept{
         return capacity_ - (front_capacity_ + size_);
     }
-    
-
-
-    void resize(size_type new_size){
-        resize_back(new_size);
+    // void resize(size_type new_size){
+    //     resize_back(new_size);
+    // }
+    // void resize(size_type new_size, const_reference value){
+    //     resize_back(new_size, value);
+    // }
+    // void resize_front(size_type new_size, const_reference value){
+    //     if (new_size < size_) {
+    //         erase(begin(), begin() + (size_ - new_size));
+    //         return;
+    //     }
+    //     insert(begin(), new_size - size_, value);
+    // }
+    // void resize_front(size_type new_size){
+    //     resize_front(new_size, value_type{});
+    // }
+    // void resize_back(size_type new_size, const_reference value){
+    //     if (new_size < size_) {
+    //         erase(begin() + (size_ - new_size), end());
+    //         return;
+    //     }
+    //     insert(begin() + size_, new_size - size_, value);
+    // }
+    // void resize_back(size_type new_size){
+    //     resize_back(new_size, value_type{});
+    // }
+    void reserve(size_type new_capacity){
+        reserve_back(new_capacity);
     }
-    void resize(size_type new_size, const_reference value){
-        resize_back(new_size, value);
-    }
-    void resize_front(size_type new_size, const_reference value){
-        if (new_size < size_) {
-            erase(begin(), begin() + (size_ - new_size));
+    void reserve_front(size_type new_capacity){
+        size_type n = new_capacity - size_;
+        if(n <= front_capacity_){ return; }
+        if (new_capacity > max_size()) {
+            throw std::length_error("devector::reserve_front");
+        }
+        if(new_capacity <= capacity_){
+            size_type shift = n - front_capacity_;
+            if constexpr (std::is_trivially_move_constructible_v<value_type> && std::is_trivially_destructible_v<value_type>) {
+                std::shift_right(arr_ + front_capacity_, arr_ + front_capacity_ + size_, shift);
+            } else {
+                for (size_type index = size_; index-- > 0;) {
+                    std::swap(arr_[front_capacity_ + index + shift], arr_[front_capacity_ + index]);
+                }
+            }
+            front_capacity_ = n;
             return;
         }
-        insert(begin(), new_size - size_, value);
+        pointer newarr = allocator_traits_type::allocate(get_stored_allocator(), new_capacity);
+        size_type index = 0;
+        try{
+            for(;index < size_; ++index){
+                allocator_traits_type::construct(get_stored_allocator(), newarr + n + index, std::move_if_noexcept((*this)[index]));
+            }
+        }
+        catch(...){
+            for(size_type bad_index = 0; bad_index < index; ++bad_index){
+                allocator_traits_type::destroy(get_stored_allocator(), newarr + n + bad_index);
+            }
+            allocator_traits_type::deallocate(get_stored_allocator(), newarr, new_capacity);
+            throw;
+        }
+        size_type old_size = size_;
+        destroy_n_and_deallocate(size_);
+        arr_ = newarr;
+        size_ = old_size;
+        capacity_ = new_capacity;
+        front_capacity_ = n;
     }
-    void resize_front(size_type new_size){
-        resize_front(new_size, value_type{});
-    }
-    void resize_back(size_type new_size, const_reference value){
-        if (new_size < size_) {
-            erase(begin() + (size_ - new_size), end());
+    void reserve_back(size_type new_capacity){
+        size_type n = new_capacity - size_;
+        if(n <= back_free_capacity()){ return; }
+        if (new_capacity > max_size()) {
+            throw std::length_error("devector::reserve_back");
+        }
+        if(new_capacity <= capacity_){
+            size_type new_front_capacity = capacity_ - n - size_;
+            if constexpr (std::is_trivially_move_constructible_v<value_type> && std::is_trivially_destructible_v<value_type>) {
+                std::shift_left(arr_ + front_capacity_, arr_ + front_capacity_ + size_, n - back_free_capacity());
+            } else {
+                for(size_type index = 0; index < size_; ++index){
+                    std::swap(arr_[new_front_capacity + index], arr_[front_capacity_ + index]);
+                }
+            }
+            front_capacity_ = new_front_capacity;
             return;
         }
-        insert(begin() + size_, new_size - size_, value);
+        pointer newarr = allocator_traits_type::allocate(get_stored_allocator(), new_capacity);
+        size_type index = 0;
+        try{
+            for(;index < size_; ++index){
+                allocator_traits_type::construct(get_stored_allocator(), newarr + index, std::move_if_noexcept((*this)[index]));
+            }
+        }
+        catch(...){
+            for(size_type bad_index = 0; bad_index < index; ++bad_index){
+                allocator_traits_type::destroy(get_stored_allocator(), newarr + bad_index);
+            }
+            allocator_traits_type::deallocate(get_stored_allocator(), newarr, new_capacity);
+            throw;
+        }
+        size_type old_size = size_;
+        destroy_n_and_deallocate(size_);
+        arr_ = newarr;
+        size_ = old_size;
+        capacity_ = new_capacity;
+        front_capacity_ = 0;
     }
-    void resize_back(size_type new_size){
-        resize_back(new_size, value_type{});
+    void shrink_to_fit(){
+        if(capacity_ == size_){ return; }
+        pointer newarr = allocator_traits_type::allocate(get_stored_allocator(), size_);
+        size_type index = 0;
+        try{
+            for(;index < size_; ++index){
+                allocator_traits_type::construct(get_stored_allocator(), newarr + index, std::move_if_noexcept((*this)[index]));
+            }
+        }
+        catch(...){
+            for(size_type bad_index = 0; bad_index < index; ++bad_index){
+                allocator_traits_type::destroy(get_stored_allocator(), newarr + bad_index);
+            }
+            allocator_traits_type::deallocate(get_stored_allocator(), newarr, size_);
+            throw;
+        }
+        size_type old_size = size_;
+        destroy_n_and_deallocate(size_);
+        arr_ = newarr;
+        size_ = old_size;
+        capacity_ = size_;
+        front_capacity_ = 0;
     }
 
-
-
-
-
+    template<typename ... Args> void emplace_front(Args&& ... args){
+        if(front_capacity_ == 0){
+            reserve_front(capacity_ * 2 + 1);
+        }
+        allocator_traits_type::construct(get_stored_allocator(), arr_ + front_capacity_ - 1, std::forward<Args>(args)...);
+        --front_capacity_;
+        ++size_;
+    }
+    void push_front(const_reference value){
+        emplace_front(value);
+    }
+    void push_front(value_type&& value){
+        emplace_front(std::move(value));
+    }
+    void pop_front() noexcept{
+        allocator_traits_type::destroy(get_stored_allocator(), arr_ + front_capacity_);
+        ++front_capacity_;
+        --size_;
+    }
+    template<typename ... Args> void emplace_back(Args&& ... args){
+        if(back_free_capacity() == 0){
+            reserve_back(capacity_ * 2 + 1);
+        }
+        allocator_traits_type::construct(get_stored_allocator(), arr_ + front_capacity_ + size_, std::forward<Args>(args)...);
+        ++size_;
+    }
+    void push_back(const_reference value){
+        emplace_back(value);
+    }
+    void push_back(value_type&& value){
+        emplace_back(std::move(value));
+    }
+    void pop_back() noexcept{
+        allocator_traits_type::destroy(get_stored_allocator(), arr_ + front_capacity_ + size_ - 1);
+        --size_;
+    }
 
     reference operator[](size_type index) noexcept{
         return arr_[front_capacity_ + index];
@@ -390,7 +486,7 @@ public:
         }
         else if constexpr (!is_always_equal::value){
             if(get_stored_allocator() != other.get_stored_allocator()){
-                std::terminate();
+                throw(std::runtime_error(""));
             }
         }
         std::swap(arr_, other.arr_);

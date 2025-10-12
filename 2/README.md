@@ -28,6 +28,12 @@ make Tests     // Compiles the Tests program
 ```bash
 ./build/Tests/Tests  // Runs the Tests program
 ```
+
+4. Generate a coverage report:
+```bash
+gcovr -r . -f ".*Devector\.hpp" --html-details coverage.html
+```
+
 <!-- 
 4. Generate documentation:
 ```bash
