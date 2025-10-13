@@ -152,6 +152,17 @@ TEST_F(DevectorTest, CopyAssignment) {
     }
 }
 
+TEST_F(DevectorTest, CopyAssignmentBigCapacity) {
+    devector<int> original(5, 42);
+    devector<int> copy(5, reserve_only_tag_t{});
+    copy = original;
+    
+    EXPECT_EQ(original.size(), copy.size());
+    for (size_t i = 0; i < 5; ++i) {
+        EXPECT_EQ(copy[i], 42);
+    }
+}
+
 TEST_F(DevectorTest, MoveAssignment) {
     devector<int> original(5, 42);
     devector<int> moved;
@@ -173,6 +184,16 @@ TEST_F(DevectorTest, InitializerListAssignment) {
     EXPECT_EQ(v.size(), 5);
     for (size_t i = 0; i < 5; ++i) {
         EXPECT_EQ(v[i], static_cast<int>(i + 1));
+    }
+}
+
+TEST_F(DevectorTest, SizeValueAssignment) {
+    devector<int> v;
+    v.assign(3, 50);
+    
+    EXPECT_EQ(v.size(), 3);
+    for (size_t i = 0; i < 3; ++i) {
+        EXPECT_EQ(v[i], 50);
     }
 }
 
@@ -679,7 +700,19 @@ TEST_F(DevectorTest, MoveAssignmentWithDifferentAllocators) {
     }
 }
 
-// // Тест на swap с разными аллокаторами (должен завершаться аварийно)
+TEST_F(DevectorTest, MoveAssignmentWithDifferentAllocatorsBigCapacity) {
+    devector<int, StatefulAllocator<int>> original(5, 42, StatefulAllocator<int>(1));
+    devector<int, StatefulAllocator<int>> target(5, 10, StatefulAllocator<int>(2));
+    
+    target = std::move(original);
+    
+    EXPECT_EQ(target.size(), 5);
+    for (size_t i = 0; i < 5; ++i) {
+        EXPECT_EQ(target[i], 42);
+    }
+}
+
+// Тест на swap с разными аллокаторами (должен завершаться аварийно)
 // TEST_F(DevectorTest, SwapWithDifferentAllocatorsTerminates) {
 //     devector<int, StatefulAllocator<int>> v1(3, 1, StatefulAllocator<int>(1));
 //     devector<int, StatefulAllocator<int>> v2(3, 2, StatefulAllocator<int>(2));
@@ -785,47 +818,46 @@ TEST_F(DevectorTest, SwapWithPropagatingAllocator) {
 }
 
 // Тест на конструктор с итераторами для input iterator с исключением
-// TEST_F(DevectorTest, InputIteratorConstructorWithException) {
-//     struct ThrowingInputIterator {
-//         using iterator_category = std::input_iterator_tag;
-//         using value_type = int;
-//         using difference_type = std::ptrdiff_t;
-//         using pointer = int*;
-//         using reference = int&;
+TEST_F(DevectorTest, InputIteratorConstructorWithException) {
+    struct MyInputIterator {
+        using iterator_category = std::input_iterator_tag;
+        using value_type = int;
+        using difference_type = std::ptrdiff_t;
+        using pointer = int*;
+        using reference = int&;
+
+        int ptr_;
+        int counter_;
         
-//         int count;
-//         int max_before_throw;
+        MyInputIterator(int ptr) : ptr_(ptr), counter_(0) {}
         
-//         ThrowingInputIterator(int max_throw) : count(0), max_before_throw(max_throw) {}
+        MyInputIterator& operator++() {
+            ++ptr_;
+            ++counter_;
+            if(counter_ == 2){ throw std::runtime_error(""); }
+            return *this;
+        }
         
-//         ThrowingInputIterator& operator++() {
-//             ++count;
-//             if (count >= max_before_throw) {
-//                 throw std::runtime_error("Test exception");
-//             }
-//             return *this;
-//         }
+        MyInputIterator operator++(int) {
+            MyInputIterator tmp = *this;
+            ++(*this);
+            return tmp;
+        }
         
-//         ThrowingInputIterator operator++(int) {
-//             ThrowingInputIterator tmp = *this;
-//             ++(*this);
-//             return tmp;
-//         }
+        int operator*() const {
+            return ptr_;
+        }
         
-//         int operator*() const {
-//             return count;
-//         }
-        
-//         bool operator==(const ThrowingInputIterator& other) const {
-//             return count == other.count;
-//         }
-//     };
+        bool operator==(const MyInputIterator& other) const {
+            return ptr_ == other.ptr_;
+        }
+    };
     
-//     ThrowingInputIterator begin(3), end(5);
+    MyInputIterator begin(3), end(7);
     
-//     devector<int> v;
-//     EXPECT_THROW(v.assign(begin, end), std::runtime_error);
-// }
+    devector<int> v;
+    EXPECT_THROW(v.assign(begin, end), std::runtime_error);
+}
 
 // Тест на само-перемещающее присваивание
 TEST_F(DevectorTest, SelfMoveAssignmentWithNonEqualAllocators) {
@@ -866,4 +898,421 @@ TEST_F(DevectorTest, DataWithFrontCapacity) {
     EXPECT_EQ(*v.data(), 1);
     EXPECT_EQ(v.data()[1], 2);
     EXPECT_EQ(v.data()[2], 3);
+}
+
+//----------------
+
+// Тесты для reserve_front и reserve_back
+TEST_F(DevectorTest, ReserveFrontWithoutReallocation) {
+    devector<int> v(5, 10, reserve_only_tag_t{}); // capacity=15, front_capacity=5
+    for(int i = 1; i < 4; ++i){
+        v.push_back(i);
+    }
+    
+    size_t old_capacity = v.capacity();
+    v.reserve_front(3); // Уже есть 5, так что не должно перевыделять
+    
+    EXPECT_EQ(v.capacity(), old_capacity);
+    EXPECT_EQ(v.front_free_capacity(), 5);
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+}
+
+TEST_F(DevectorTest, ReserveFrontWithReallocation) {
+    devector<int> v(2, 2, reserve_only_tag_t{}); // capacity=4, front_capacity=2
+    for(int i = 1; i < 3; ++i){
+        v.push_back(i);
+    }
+    
+    v.reserve_front(7); // Нужно больше front capacity
+    
+    EXPECT_GE(v.capacity(), 7); // 5 (новый front) + 2 (size)
+    EXPECT_EQ(v.front_free_capacity(), 5);
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+}
+
+TEST_F(DevectorTest, ReserveFrontWithTrivialMove) {
+    devector<int> v(2, 2, reserve_only_tag_t{});
+    for(int i = 1; i < 3; ++i){
+        v.push_back(i);
+    }
+    
+    v.reserve_front(5);
+    
+    EXPECT_GE(v.capacity(), 5);
+    EXPECT_EQ(v.front_free_capacity(), 3);
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+}
+
+TEST_F(DevectorTest, ReserveBackWithoutReallocation) {
+    devector<int> v(5, 10, reserve_only_tag_t{}); // capacity=15, front_capacity=5
+    for(int i = 1; i < 4; ++i){
+        v.push_back(i);
+    }
+    
+    size_t old_capacity = v.capacity();
+    v.reserve_back(8);
+    
+    EXPECT_EQ(v.capacity(), old_capacity);
+    EXPECT_EQ(v.back_free_capacity(), 7);
+    EXPECT_EQ(v.size(), 3);
+}
+
+TEST_F(DevectorTest, ReserveBackWithReallocation) {
+    devector<int> v(2, 2, reserve_only_tag_t{}); // capacity=4, front_capacity=2
+    for(int i = 1; i < 3; ++i){
+        v.push_back(i);
+    }
+    
+    v.reserve_back(7); // Нужно больше back capacity
+    
+    EXPECT_GE(v.capacity(), 7); // 2 (front) + 2 (size) + 5 (новый back)
+    EXPECT_EQ(v.back_free_capacity(), 5);
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+}
+
+TEST_F(DevectorTest, ReserveBackWithTrivialMove) {
+    devector<int> v(2, 2, reserve_only_tag_t{});
+    for(int i = 1; i < 3; ++i){
+        v.push_back(i);
+    }
+    
+    v.reserve_back(5);
+    
+    EXPECT_GE(v.capacity(), 5);
+    EXPECT_EQ(v.back_free_capacity(), 3);
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+}
+
+TEST_F(DevectorTest, ReserveFrontExceptionSafety) {
+    devector<std::vector<int>> v(2, 2, reserve_only_tag_t{});
+    v.push_back(std::vector<int>{1, 2});
+    v.push_back(std::vector<int>{3, 4});
+    
+    // Попытка резервирования с исключением при перемещении
+    EXPECT_THROW(v.reserve_front(v.max_size() + 1), std::exception);
+    
+    // Состояние должно остаться валидным
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0].size(), 2);
+    EXPECT_EQ(v[1].size(), 2);
+}
+
+TEST_F(DevectorTest, ReserveBackExceptionSafety) {
+    devector<std::vector<int>> v(2, 2, reserve_only_tag_t{});
+    v.push_back(std::vector<int>{1, 2});
+    v.push_back(std::vector<int>{3, 4});
+    
+    // Попытка резервирования с исключением при перемещении
+    EXPECT_THROW(v.reserve_back(v.max_size() + 1), std::exception);
+    
+    // Состояние должно остаться валидным
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0].size(), 2);
+    EXPECT_EQ(v[1].size(), 2);
+}
+
+// Тесты для shrink_to_fit
+TEST_F(DevectorTest, ShrinkToFitEmpty) {
+    devector<int> v(10, 10, reserve_only_tag_t{});
+    v.shrink_to_fit();
+    
+    EXPECT_EQ(v.capacity(), 0);
+    EXPECT_EQ(v.size(), 0);
+    EXPECT_EQ(v.front_free_capacity(), 0);
+}
+
+TEST_F(DevectorTest, ShrinkToFitNonEmpty) {
+    devector<int> v(5, 10, reserve_only_tag_t{}); // capacity=15
+    for(int i = 1; i < 4; ++i){
+        v.push_back(i);
+    }
+    
+    v.shrink_to_fit();
+    
+    EXPECT_EQ(v.capacity(), 3);
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(v.front_free_capacity(), 0);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+}
+
+TEST_F(DevectorTest, ShrinkToFitExceptionSafety) {
+    devector<std::vector<int>> v(5, 10, reserve_only_tag_t{});
+    v.push_back(std::vector<int>{1});
+    v.push_back(std::vector<int>{2});
+    v.push_back(std::vector<int>{3});
+    // shrink_to_fit не должен бросать исключения при успешном выполнении
+    EXPECT_NO_THROW(v.shrink_to_fit());
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(v[0].size(), 1);
+    EXPECT_EQ(v[1].size(), 1);
+    EXPECT_EQ(v[2].size(), 1);
+}
+
+// Тесты для push/pop операций
+TEST_F(DevectorTest, PushBackWithoutReallocation) {
+    devector<int> v(0, 5, reserve_only_tag_t{}); // back_capacity=5
+    v.push_back(1);
+    v.push_back(2);
+    v.push_back(3);
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(v.back_free_capacity(), 2);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+}
+
+TEST_F(DevectorTest, PushBackWithReallocation) {
+    devector<int> v;
+    v.push_back(1);
+    v.push_back(2);
+    v.push_back(3);
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_GE(v.capacity(), 3);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+}
+
+TEST_F(DevectorTest, PushFrontWithoutReallocation) {
+    devector<int> v(5, 0, reserve_only_tag_t{}); // front_capacity=5
+    v.push_front(1);
+    v.push_front(2);
+    v.push_front(3);
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(v.front_free_capacity(), 2);
+    EXPECT_EQ(v[0], 3);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 1);
+}
+
+TEST_F(DevectorTest, PushFrontWithReallocation) {
+    devector<int> v;
+    v.push_front(1);
+    v.push_front(2);
+    v.push_front(3);
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_GE(v.capacity(), 3);
+    EXPECT_EQ(v[0], 3);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 1);
+}
+
+TEST_F(DevectorTest, PopBackNonEmpty) {
+    devector<int> v = {1, 2, 3};
+    v.pop_back();
+    
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v.back(), 2);
+}
+
+TEST_F(DevectorTest, PopFrontNonEmpty) {
+    devector<int> v = {1, 2, 3};
+    v.pop_front();
+    
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0], 2);
+    EXPECT_EQ(v[1], 3);
+    EXPECT_EQ(v.front(), 2);
+}
+
+TEST_F(DevectorTest, EmplaceBack) {
+    devector<std::pair<int, int>> v;
+    v.emplace_back(1, 2);
+    v.emplace_back(3, 4);
+    
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0].first, 1);
+    EXPECT_EQ(v[0].second, 2);
+    EXPECT_EQ(v[1].first, 3);
+    EXPECT_EQ(v[1].second, 4);
+}
+
+TEST_F(DevectorTest, EmplaceFront) {
+    devector<std::pair<int, int>> v;
+    v.emplace_front(1, 2);
+    v.emplace_front(3, 4);
+    
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0].first, 3);
+    EXPECT_EQ(v[0].second, 4);
+    EXPECT_EQ(v[1].first, 1);
+    EXPECT_EQ(v[1].second, 2);
+}
+
+// Тесты для геттеров
+TEST_F(DevectorTest, DataEmpty) {
+    devector<int> v;
+    EXPECT_EQ(v.data(), nullptr);
+}
+
+TEST_F(DevectorTest, DataNonEmpty) {
+    devector<int> v = {1, 2, 3};
+    EXPECT_NE(v.data(), nullptr);
+    EXPECT_EQ(*v.data(), 1);
+}
+
+TEST_F(DevectorTest, FrontEmpty) {
+    devector<int> v;
+    // Поведение front() на пустом контейнере не определено, но хотя бы не должно падать
+    EXPECT_NO_THROW(v.front());
+}
+
+TEST_F(DevectorTest, BackEmpty) {
+    devector<int> v;
+    // Поведение back() на пустом контейнере не определено, но хотя бы не должно падать
+    EXPECT_NO_THROW(v.back());
+}
+
+TEST_F(DevectorTest, AtValidIndex) {
+    devector<int> v = {1, 2, 3};
+    EXPECT_EQ(v.at(0), 1);
+    EXPECT_EQ(v.at(1), 2);
+    EXPECT_EQ(v.at(2), 3);
+}
+
+TEST_F(DevectorTest, AtInvalidIndex) {
+    devector<int> v = {1, 2, 3};
+    EXPECT_THROW(v.at(3), std::out_of_range);
+    EXPECT_THROW(v.at(10), std::out_of_range);
+}
+
+TEST_F(DevectorTest, AtEmpty) {
+    devector<int> v;
+    EXPECT_THROW(v.at(0), std::out_of_range);
+}
+
+TEST_F(DevectorTest, ConstAtValidIndex) {
+    const devector<int> v = {1, 2, 3};
+    EXPECT_EQ(v.at(0), 1);
+    EXPECT_EQ(v.at(1), 2);
+    EXPECT_EQ(v.at(2), 3);
+}
+
+TEST_F(DevectorTest, ConstAtInvalidIndex) {
+    const devector<int> v = {1, 2, 3};
+    EXPECT_THROW(v.at(3), std::out_of_range);
+}
+
+// Тесты для итераторов в особых случаях
+TEST_F(DevectorTest, IteratorsAfterReallocation) {
+    devector<int> v;
+    v.push_back(1);
+    v.push_back(2);
+    
+    auto old_begin = v.begin();
+    auto old_end = v.end();
+    
+    // Принудительно вызываем реаллокацию
+    for (int i = 0; i < 100; ++i) {
+        v.push_back(i);
+    }
+    
+    // Итераторы должны стать невалидными после реаллокации,
+    // но мы можем проверить, что новые итераторы работают
+    EXPECT_EQ(*v.begin(), 1);
+    EXPECT_EQ(*(v.end() - 1), 99);
+}
+
+TEST_F(DevectorTest, ReverseIteratorsWithFrontCapacity) {
+    devector<int> v(3, 0, reserve_only_tag_t{}); // front_capacity=3
+    for(int i = 1; i < 4; ++i){
+        v.push_back(i);
+    }
+    
+    int expected = 3;
+    for (auto it = v.rbegin(); it != v.rend(); ++it) {
+        EXPECT_EQ(*it, expected--);
+    }
+}
+
+TEST_F(DevectorTest, IteratorsEmptyContainer) {
+    devector<int> v;
+    EXPECT_EQ(v.begin(), v.end());
+    EXPECT_EQ(v.cbegin(), v.cend());
+    EXPECT_EQ(v.rbegin(), v.rend());
+    EXPECT_EQ(v.crbegin(), v.crend());
+}
+
+// Тесты для edge cases
+TEST_F(DevectorTest, PushBackToCapacity) {
+    devector<int> v(0, 3, reserve_only_tag_t{}); // back_capacity=3
+    v.push_back(1);
+    v.push_back(2);
+    v.push_back(3); // Заполняем до конца
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(v.back_free_capacity(), 0);
+    
+    // Следующий push должен вызвать реаллокацию
+    v.push_back(4);
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(v.back(), 4);
+}
+
+TEST_F(DevectorTest, PushFrontToCapacity) {
+    devector<int> v(3, 0, reserve_only_tag_t{}); // front_capacity=3
+    v.push_front(1);
+    v.push_front(2);
+    v.push_front(3); // Заполняем до конца
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(v.front_free_capacity(), 0);
+    
+    // Следующий push должен вызвать реаллокацию
+    v.push_front(4);
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(v.front(), 4);
+}
+
+TEST_F(DevectorTest, MaxSizeReserve) {
+    devector<int> v;
+    EXPECT_THROW(v.reserve(v.max_size() + 1), std::length_error);
+    EXPECT_THROW(v.reserve_front(v.max_size() + 1), std::length_error);
+    EXPECT_THROW(v.reserve_back(v.max_size() + 1), std::length_error);
+}
+
+// Тест на тривиальные типы с reserve
+TEST_F(DevectorTest, ReserveWithTrivialType) {
+    devector<int> v(2, 2, reserve_only_tag_t{});
+    for(int i = 1; i < 3; ++i){
+        v.push_back(i);
+    }
+    
+    // Не должно падать с тривиальными типами
+    EXPECT_NO_THROW(v.reserve_front(5));
+    EXPECT_NO_THROW(v.reserve_back(5));
+}
+
+// Тест на нетривиальные типы с reserve
+TEST_F(DevectorTest, ReserveWithNonTrivialType) {
+    devector<std::string> v(2, 2, reserve_only_tag_t{});
+    v.push_back("a");
+    v.push_back("b");
+    
+    // Не должно падать с нетривиальными типами
+    EXPECT_NO_THROW(v.reserve_front(5));
+    EXPECT_NO_THROW(v.reserve_back(5));
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0], "a");
+    EXPECT_EQ(v[1], "b");
 }
