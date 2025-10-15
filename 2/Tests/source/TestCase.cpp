@@ -6,6 +6,14 @@
 #include <Devector/Devector.hpp>
 #include <vector>
 
+#define GREEN "\033[38;2;0;255;0m"
+#define RED "\033[38;2;255;0;0m"
+#define BLUE "\033[38;2;0;191;255m"
+#define ORANGE "\033[38;2;255;165;0m"
+#define MAGENTA "\033[38;2;255;20;147m"
+#define YELLOW "\033[38;2;255;255;0m"
+#define RESET "\033[0;0m"
+
 using namespace DevectorNameSpace;
 
 // Test fixture for devector tests
@@ -297,89 +305,89 @@ TEST_F(DevectorTest, CapacityMethods) {
 }
 
 // Resize tests
-// TEST_F(DevectorTest, ResizeBackWithValue) {
-//     devector<int> v = {1, 2, 3};
-//     v.resize_back(5, 42);
+TEST_F(DevectorTest, ResizeBackWithValue) {
+    devector<int> v = {1, 2, 3};
+    v.resize_back(5, 42);
     
-//     EXPECT_EQ(v.size(), 5);
-//     EXPECT_EQ(v[0], 1);
-//     EXPECT_EQ(v[1], 2);
-//     EXPECT_EQ(v[2], 3);
-//     EXPECT_EQ(v[3], 42);
-//     EXPECT_EQ(v[4], 42);
+    EXPECT_EQ(v.size(), 5);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 42);
+    EXPECT_EQ(v[4], 42);
     
-//     v.resize_back(2);
-//     EXPECT_EQ(v.size(), 2);
-//     EXPECT_EQ(v[0], 1);
-//     EXPECT_EQ(v[1], 2);
-// }
+    v.resize_back(2);
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+}
 
-// TEST_F(DevectorTest, ResizeBackDefault) {
-//     devector<int> v = {1, 2, 3};
-//     v.resize_back(5);
+TEST_F(DevectorTest, ResizeBackDefault) {
+    devector<int> v = {1, 2, 3};
+    v.resize_back(5);
     
-//     EXPECT_EQ(v.size(), 5);
-//     EXPECT_EQ(v[0], 1);
-//     EXPECT_EQ(v[1], 2);
-//     EXPECT_EQ(v[2], 3);
-//     EXPECT_EQ(v[3], 0);
-//     EXPECT_EQ(v[4], 0);
-// }
+    EXPECT_EQ(v.size(), 5);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 0);
+    EXPECT_EQ(v[4], 0);
+}
 
-// TEST_F(DevectorTest, ResizeFrontWithValue) {
-//     devector<int> v = {1, 2, 3};
-//     v.resize_front(5, 42);
+TEST_F(DevectorTest, ResizeFrontWithValue) {
+    devector<int> v = {1, 2, 3};
+    v.resize_front(5, 42);
     
-//     EXPECT_EQ(v.size(), 5);
-//     EXPECT_EQ(v[0], 42);
-//     EXPECT_EQ(v[1], 42);
-//     EXPECT_EQ(v[2], 1);
-//     EXPECT_EQ(v[3], 2);
-//     EXPECT_EQ(v[4], 3);
+    EXPECT_EQ(v.size(), 5);
+    EXPECT_EQ(v[0], 42);
+    EXPECT_EQ(v[1], 42);
+    EXPECT_EQ(v[2], 1);
+    EXPECT_EQ(v[3], 2);
+    EXPECT_EQ(v[4], 3);
     
-//     v.resize_front(2);
-//     EXPECT_EQ(v.size(), 2);
-//     EXPECT_EQ(v[0], 1);
-//     EXPECT_EQ(v[1], 2);
-// }
+    v.resize_front(2);
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0], 2);
+    EXPECT_EQ(v[1], 3);
+}
 
-// TEST_F(DevectorTest, ResizeFrontDefault) {
-//     devector<int> v = {1, 2, 3};
-//     v.resize_front(5);
+TEST_F(DevectorTest, ResizeFrontDefault) {
+    devector<int> v = {1, 2, 3};
+    v.resize_front(5);
     
-//     EXPECT_EQ(v.size(), 5);
-//     EXPECT_EQ(v[0], 0);
-//     EXPECT_EQ(v[1], 0);
-//     EXPECT_EQ(v[2], 1);
-//     EXPECT_EQ(v[3], 2);
-//     EXPECT_EQ(v[4], 3);
-// }
+    EXPECT_EQ(v.size(), 5);
+    EXPECT_EQ(v[0], 0);
+    EXPECT_EQ(v[1], 0);
+    EXPECT_EQ(v[2], 1);
+    EXPECT_EQ(v[3], 2);
+    EXPECT_EQ(v[4], 3);
+}
 
-// TEST_F(DevectorTest, ResizeWithValue) {
-//     devector<int> v = {1, 2, 3};
-//     v.resize(5, 42);
+TEST_F(DevectorTest, ResizeWithValue) {
+    devector<int> v = {1, 2, 3};
+    v.resize(5, 42);
     
-//     EXPECT_EQ(v.size(), 5);
-//     // Default resize should resize back
-//     EXPECT_EQ(v[0], 1);
-//     EXPECT_EQ(v[1], 2);
-//     EXPECT_EQ(v[2], 3);
-//     EXPECT_EQ(v[3], 42);
-//     EXPECT_EQ(v[4], 42);
-// }
+    EXPECT_EQ(v.size(), 5);
+    // Default resize should resize back
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 42);
+    EXPECT_EQ(v[4], 42);
+}
 
-// TEST_F(DevectorTest, ResizeDefault) {
-//     devector<int> v = {1, 2, 3};
-//     v.resize(5);
+TEST_F(DevectorTest, ResizeDefault) {
+    devector<int> v = {1, 2, 3};
+    v.resize(5);
     
-//     EXPECT_EQ(v.size(), 5);
-//     // Default resize should resize back
-//     EXPECT_EQ(v[0], 1);
-//     EXPECT_EQ(v[1], 2);
-//     EXPECT_EQ(v[2], 3);
-//     EXPECT_EQ(v[3], 0);
-//     EXPECT_EQ(v[4], 0);
-// }
+    EXPECT_EQ(v.size(), 5);
+    // Default resize should resize back
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 0);
+    EXPECT_EQ(v[4], 0);
+}
 
 // Clear test
 TEST_F(DevectorTest, Clear) {
@@ -547,39 +555,39 @@ TEST_F(DevectorTest, MemoryManagementWithTrackingAllocator) {
 }
 
 // Edge case tests
-// TEST_F(DevectorTest, EmptyVectorOperations) {
-//     devector<int> v;
+TEST_F(DevectorTest, EmptyVectorOperations) {
+    devector<int> v;
     
-//     EXPECT_TRUE(v.empty());
-//     EXPECT_EQ(v.size(), 0);
-//     EXPECT_EQ(v.capacity(), 0);
+    EXPECT_TRUE(v.empty());
+    EXPECT_EQ(v.size(), 0);
+    EXPECT_EQ(v.capacity(), 0);
     
-//     // These should not crash
-//     v.clear();
-//     v.resize(0);
-//     v.resize_front(0);
-//     v.resize_back(0);
-// }
+    // These should not crash
+    v.clear();
+    v.resize(0);
+    v.resize_front(0);
+    v.resize_back(0);
+}
 
-// TEST_F(DevectorTest, SingleElementVector) {
-//     devector<int> v = {42};
+TEST_F(DevectorTest, SingleElementVector) {
+    devector<int> v = {42};
     
-//     EXPECT_EQ(v.size(), 1);
-//     EXPECT_EQ(v[0], 42);
-//     EXPECT_EQ(v.front(), 42);
-//     EXPECT_EQ(v.back(), 42);
-//     EXPECT_EQ(*(v.data()), 42);
+    EXPECT_EQ(v.size(), 1);
+    EXPECT_EQ(v[0], 42);
+    EXPECT_EQ(v.front(), 42);
+    EXPECT_EQ(v.back(), 42);
+    EXPECT_EQ(*(v.data()), 42);
     
-//     v.resize_back(3, 10);
-//     EXPECT_EQ(v.size(), 3);
-//     EXPECT_EQ(v[0], 42);
-//     EXPECT_EQ(v[1], 10);
-//     EXPECT_EQ(v[2], 10);
+    v.resize_back(3, 10);
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(v[0], 42);
+    EXPECT_EQ(v[1], 10);
+    EXPECT_EQ(v[2], 10);
     
-//     v.resize_front(1);
-//     EXPECT_EQ(v.size(), 1);
-//     EXPECT_EQ(v[0], 42);
-// }
+    v.resize_front(1);
+    EXPECT_EQ(v.size(), 1);
+    EXPECT_EQ(v[0], 10);
+}
 
 TEST_F(DevectorTest, MaxSize) {
     devector<int> v;
@@ -587,22 +595,22 @@ TEST_F(DevectorTest, MaxSize) {
 }
 
 // Test with different types
-// TEST_F(DevectorTest, StringVector) {
-//     devector<std::string> v = {"hello", "world"};
+TEST_F(DevectorTest, StringVector) {
+    devector<std::string> v = {"hello", "world"};
     
-//     EXPECT_EQ(v.size(), 2);
-//     EXPECT_EQ(v[0], "hello");
-//     EXPECT_EQ(v[1], "world");
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0], "hello");
+    EXPECT_EQ(v[1], "world");
     
-//     v.resize_back(4, "test");
-//     EXPECT_EQ(v.size(), 4);
-//     EXPECT_EQ(v[2], "test");
-//     EXPECT_EQ(v[3], "test");
+    v.resize_back(4, "test");
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(v[2], "test");
+    EXPECT_EQ(v[3], "test");
     
-//     v.resize_front(1);
-//     EXPECT_EQ(v.size(), 1);
-//     EXPECT_EQ(v[0], "hello");
-// }
+    v.resize_front(1);
+    EXPECT_EQ(v.size(), 1);
+    EXPECT_EQ(v[0], "test");
+}
 
 TEST_F(DevectorTest, UniquePtrVector) {
     devector<std::unique_ptr<int>> v;
@@ -711,14 +719,6 @@ TEST_F(DevectorTest, MoveAssignmentWithDifferentAllocatorsBigCapacity) {
         EXPECT_EQ(target[i], 42);
     }
 }
-
-// Тест на swap с разными аллокаторами (должен завершаться аварийно)
-// TEST_F(DevectorTest, SwapWithDifferentAllocatorsTerminates) {
-//     devector<int, StatefulAllocator<int>> v1(3, 1, StatefulAllocator<int>(1));
-//     devector<int, StatefulAllocator<int>> v2(3, 2, StatefulAllocator<int>(2));
-    
-//     EXPECT_DEATH(v1.swap(v2), "");
-// }
 
 // Тест на swap с одинаковыми аллокаторами
 TEST_F(DevectorTest, SwapWithSameAllocators) {
@@ -920,6 +920,23 @@ TEST_F(DevectorTest, ReserveFrontWithoutReallocation) {
     EXPECT_EQ(v[2], 3);
 }
 
+TEST_F(DevectorTest, ReserveFrontWithoutReallocationWithShift) {
+    devector<int> v(5, 10, reserve_only_tag_t{}); // capacity=15, front_capacity=5
+    for(int i = 1; i < 4; ++i){
+        v.push_back(i);
+    }
+    
+    size_t old_capacity = v.capacity();
+    v.reserve_front(9); // Уже есть 5, так что не должно перевыделять
+    
+    EXPECT_EQ(v.capacity(), old_capacity);
+    EXPECT_EQ(v.front_free_capacity(), 6);
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+}
+
 TEST_F(DevectorTest, ReserveFrontWithReallocation) {
     devector<int> v(2, 2, reserve_only_tag_t{}); // capacity=4, front_capacity=2
     for(int i = 1; i < 3; ++i){
@@ -1091,7 +1108,8 @@ TEST_F(DevectorTest, PushBackWithReallocation) {
 
 TEST_F(DevectorTest, PushFrontWithoutReallocation) {
     devector<int> v(5, 0, reserve_only_tag_t{}); // front_capacity=5
-    v.push_front(1);
+    int val = 1;
+    v.push_front(val);
     v.push_front(2);
     v.push_front(3);
     
@@ -1311,8 +1329,542 @@ TEST_F(DevectorTest, ReserveWithNonTrivialType) {
     
     // Не должно падать с нетривиальными типами
     EXPECT_NO_THROW(v.reserve_front(5));
-    EXPECT_NO_THROW(v.reserve_back(5));
+    EXPECT_NO_THROW(v.reserve_back(10));
     EXPECT_EQ(v.size(), 2);
     EXPECT_EQ(v[0], "a");
     EXPECT_EQ(v[1], "b");
+}
+
+/* --------------- insert + erase ---------------*/
+
+// Тесты для emplace
+TEST_F(DevectorTest, EmplaceAtBegin) {
+    devector<int> v = {2, 3, 4};
+    auto it = v.emplace(v.begin(), 1);
+    
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(*it, 1);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+}
+
+TEST_F(DevectorTest, EmplaceAtEnd) {
+    devector<int> v = {1, 2, 3};
+    auto it = v.emplace(v.end(), 4);
+    
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(*it, 4);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+}
+
+TEST_F(DevectorTest, EmplaceAtMiddle) {
+    devector<int> v = {1, 3, 4};
+    auto it = v.emplace(v.begin() + 1, 2);
+    
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(*it, 2);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+}
+
+TEST_F(DevectorTest, EmplaceAtMiddleWithBackShift) {
+    devector<int> v(2, 0, reserve_only_tag_t{}); // front_capacity=2
+    for(int i = 1; i < 5; ++i){
+        v.push_back(i);
+    }
+    
+    // Теперь front_capacity=0, back_free_capacity>0
+    auto it = v.emplace(v.begin() + 2, 99);
+    
+    EXPECT_EQ(v.size(), 5);
+    EXPECT_EQ(*it, 99);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 99);
+    EXPECT_EQ(v[3], 3);
+    EXPECT_EQ(v[4], 4);
+}
+
+TEST_F(DevectorTest, EmplaceAtMiddleWithFrontShift) {
+    devector<int> v(0, 2, reserve_only_tag_t{}); // back_capacity=2
+    for(int i = 1; i < 5; ++i){
+        v.push_back(i);
+    }
+    
+    // Теперь back_free_capacity=0, front_capacity>0
+    auto it = v.emplace(v.begin() + 2, 99);
+    
+    EXPECT_EQ(v.size(), 5);
+    EXPECT_EQ(*it, 99);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 99);
+    EXPECT_EQ(v[3], 3);
+    EXPECT_EQ(v[4], 4);
+}
+
+TEST_F(DevectorTest, EmplaceWithReallocation) {
+    devector<int> v;
+    v.reserve(3);
+    for(int i = 1; i < 4; ++i){
+        v.push_back(i);
+    }
+    
+    // Должен вызвать реаллокацию
+    auto it = v.emplace(v.begin() + 1, 99);
+    
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(*it, 99);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 99);
+    EXPECT_EQ(v[2], 2);
+    EXPECT_EQ(v[3], 3);
+}
+
+// Тесты для insert с одним элементом (lvalue и rvalue)
+TEST_F(DevectorTest, InsertLValueAtBegin) {
+    devector<int> v = {2, 3, 4};
+    int value = 1;
+    auto it = v.insert(v.begin(), value);
+    
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(*it, 1);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+}
+
+TEST_F(DevectorTest, InsertRValueAtBegin) {
+    devector<std::string> v = {"b", "c", "d"};
+    auto it = v.insert(v.begin(), "a");
+    
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(*it, "a");
+    EXPECT_EQ(v[0], "a");
+    EXPECT_EQ(v[1], "b");
+    EXPECT_EQ(v[2], "c");
+    EXPECT_EQ(v[3], "d");
+}
+
+TEST_F(DevectorTest, InsertLValueAtEnd) {
+    devector<int> v = {1, 2, 3};
+    int value = 4;
+    auto it = v.insert(v.end(), value);
+    
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(*it, 4);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+}
+
+TEST_F(DevectorTest, InsertRValueAtMiddle) {
+    devector<std::string> v = {"a", "c", "d"};
+
+    auto it = v.insert(v.begin() + 1, "b");
+    
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(*it, "b");
+    EXPECT_EQ(v[0], "a");
+    EXPECT_EQ(v[1], "b");
+    EXPECT_EQ(v[2], "c");
+    EXPECT_EQ(v[3], "d");
+}
+
+// Тесты для insert с count элементами
+TEST_F(DevectorTest, InsertCountAtBegin) {
+    devector<int> v = {4, 5, 6};
+    auto it = v.insert(v.begin(), 3, 1);
+    
+    EXPECT_EQ(v.size(), 6);
+    EXPECT_EQ(*it, 1);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 1);
+    EXPECT_EQ(v[2], 1);
+    EXPECT_EQ(v[3], 4);
+    EXPECT_EQ(v[4], 5);
+    EXPECT_EQ(v[5], 6);
+}
+
+TEST_F(DevectorTest, InsertCountAtEnd) {
+    devector<int> v = {1, 2, 3};
+    auto it = v.insert(v.end(), 2, 4);
+    
+    EXPECT_EQ(v.size(), 5);
+    EXPECT_EQ(*it, 4);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+    EXPECT_EQ(v[4], 4);
+}
+
+TEST_F(DevectorTest, InsertCountAtMiddle) {
+    devector<int> v = {1, 5, 6};
+    auto it = v.insert(v.begin() + 1, 3, 2);
+    
+    EXPECT_EQ(v.size(), 6);
+    EXPECT_EQ(*it, 2);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 2);
+    EXPECT_EQ(v[3], 2);
+    EXPECT_EQ(v[4], 5);
+    EXPECT_EQ(v[5], 6);
+}
+
+TEST_F(DevectorTest, InsertZeroCount) {
+    devector<int> v = {1, 2, 3};
+    auto it = v.insert(v.begin() + 1, 0, 99);
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(*it, 2); // Должен вернуть итератор на следующий после позиции элемент
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+}
+
+// Тесты для insert с диапазоном (forward iterator)
+TEST_F(DevectorTest, InsertForwardRangeAtBegin) {
+    devector<int> v = {4, 5, 6};
+    std::vector<int> new_elems = {1, 2, 3};
+    
+    auto it = v.insert(v.begin(), new_elems.begin(), new_elems.end());
+    
+    EXPECT_EQ(v.size(), 6);
+    EXPECT_EQ(*it, 1);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+    EXPECT_EQ(v[4], 5);
+    EXPECT_EQ(v[5], 6);
+}
+
+TEST_F(DevectorTest, InsertForwardRangeAtEnd) {
+    devector<int> v = {1, 2, 3};
+    std::vector<int> new_elems = {4, 5, 6};
+    
+    auto it = v.insert(v.end(), new_elems.begin(), new_elems.end());
+    
+    EXPECT_EQ(v.size(), 6);
+    EXPECT_EQ(*it, 4);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+    EXPECT_EQ(v[4], 5);
+    EXPECT_EQ(v[5], 6);
+}
+
+TEST_F(DevectorTest, InsertForwardRangeAtMiddle) {
+    devector<int> v = {1, 5, 6};
+    std::vector<int> new_elems = {2, 3, 4};
+    
+    auto it = v.insert(v.begin() + 1, new_elems.begin(), new_elems.end());
+    
+    EXPECT_EQ(v.size(), 6);
+    EXPECT_EQ(*it, 2);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+    EXPECT_EQ(v[4], 5);
+    EXPECT_EQ(v[5], 6);
+}
+
+TEST_F(DevectorTest, InsertEmptyForwardRange) {
+    devector<int> v = {1, 2, 3};
+    std::vector<int> new_elems;
+    
+    auto it = v.insert(v.begin() + 1, new_elems.begin(), new_elems.end());
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(*it, 2);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+}
+
+// Тесты для insert с диапазоном (input iterator)
+TEST_F(DevectorTest, InsertInputRangeAtBegin) {
+    devector<int> v = {4, 5, 6};
+    std::list<int> new_elems = {1, 2, 3};
+    
+    auto it = v.insert(v.begin(), new_elems.begin(), new_elems.end());
+    
+    EXPECT_EQ(v.size(), 6);
+    EXPECT_EQ(*it, 1);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+    EXPECT_EQ(v[4], 5);
+    EXPECT_EQ(v[5], 6);
+}
+
+TEST_F(DevectorTest, InsertInputRangeAtEnd) {
+    devector<int> v = {1, 2, 3};
+    std::list<int> new_elems = {4, 5, 6};
+    
+    auto it = v.insert(v.end(), new_elems.begin(), new_elems.end());
+    
+    EXPECT_EQ(v.size(), 6);
+    EXPECT_EQ(*it, 4);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+    EXPECT_EQ(v[4], 5);
+    EXPECT_EQ(v[5], 6);
+}
+
+// Тесты для insert с initializer_list
+TEST_F(DevectorTest, InsertInitializerListAtBegin) {
+    devector<int> v = {4, 5, 6};
+    auto it = v.insert(v.begin(), {1, 2, 3});
+    
+    EXPECT_EQ(v.size(), 6);
+    EXPECT_EQ(*it, 1);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+    EXPECT_EQ(v[4], 5);
+    EXPECT_EQ(v[5], 6);
+}
+
+TEST_F(DevectorTest, InsertInitializerListAtEnd) {
+    devector<int> v = {1, 2, 3};
+    auto it = v.insert(v.end(), {4, 5, 6});
+    
+    EXPECT_EQ(v.size(), 6);
+    EXPECT_EQ(*it, 4);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+    EXPECT_EQ(v[4], 5);
+    EXPECT_EQ(v[5], 6);
+}
+
+TEST_F(DevectorTest, InsertInitializerListAtMiddle) {
+    devector<int> v = {1, 5, 6};
+    auto it = v.insert(v.begin() + 1, {2, 3, 4});
+    
+    EXPECT_EQ(v.size(), 6);
+    EXPECT_EQ(*it, 2);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+    EXPECT_EQ(v[4], 5);
+    EXPECT_EQ(v[5], 6);
+}
+
+TEST_F(DevectorTest, InsertEmptyInitializerList) {
+    devector<int> v = {1, 2, 3};
+    auto it = v.insert(v.begin() + 1, {});
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(*it, 2);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+}
+
+// Тесты для erase одного элемента
+TEST_F(DevectorTest, EraseAtBegin) {
+    devector<int> v = {1, 2, 3, 4};
+    auto it = v.erase(v.begin());
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(*it, 2);
+    EXPECT_EQ(v[0], 2);
+    EXPECT_EQ(v[1], 3);
+    EXPECT_EQ(v[2], 4);
+}
+
+TEST_F(DevectorTest, EraseAtEnd) {
+    devector<int> v = {1, 2, 3, 4};
+    auto it = v.erase(v.end() - 1);
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(it, v.end());
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+}
+
+TEST_F(DevectorTest, EraseAtMiddle) {
+    devector<int> v = {1, 2, 3, 4};
+    auto it = v.erase(v.begin() + 1);
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(*it, 3);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 3);
+    EXPECT_EQ(v[2], 4);
+}
+
+TEST_F(DevectorTest, EraseSingleElementVector) {
+    devector<int> v = {42};
+    auto it = v.erase(v.begin());
+    
+    EXPECT_EQ(v.size(), 0);
+    EXPECT_EQ(it, v.end());
+    EXPECT_TRUE(v.empty());
+}
+
+// Тесты для erase диапазона
+TEST_F(DevectorTest, EraseRangeAtBegin) {
+    devector<int> v = {1, 2, 3, 4, 5};
+    auto it = v.erase(v.begin(), v.begin() + 2);
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(*it, 3);
+    EXPECT_EQ(v[0], 3);
+    EXPECT_EQ(v[1], 4);
+    EXPECT_EQ(v[2], 5);
+}
+
+TEST_F(DevectorTest, EraseRangeAtEnd) {
+    devector<int> v = {1, 2, 3, 4, 5};
+    auto it = v.erase(v.begin() + 2, v.end());
+    
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(it, v.end());
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+}
+
+TEST_F(DevectorTest, EraseRangeAtMiddle) {
+    devector<int> v = {1, 2, 3, 4, 5};
+    auto it = v.erase(v.begin() + 1, v.begin() + 4);
+    
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(*it, 5);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 5);
+}
+
+TEST_F(DevectorTest, EraseEmptyRange) {
+    devector<int> v = {1, 2, 3, 4, 5};
+    auto it = v.erase(v.begin() + 2, v.begin() + 2);
+    
+    EXPECT_EQ(v.size(), 5);
+    EXPECT_EQ(*it, 3);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
+    EXPECT_EQ(v[4], 5);
+}
+
+TEST_F(DevectorTest, EraseAll) {
+    devector<int> v = {1, 2, 3, 4, 5};
+    auto it = v.erase(v.begin(), v.end());
+    
+    EXPECT_EQ(v.size(), 0);
+    EXPECT_EQ(it, v.end());
+    EXPECT_TRUE(v.empty());
+}
+
+// Тесты для erase с неконстантными итераторами
+TEST_F(DevectorTest, EraseWithNonConstIterators) {
+    devector<int> v = {1, 2, 3, 4, 5};
+    auto first = v.begin() + 1;
+    auto last = v.begin() + 4;
+    
+    auto it = v.erase(first, last);
+    
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(*it, 5);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 5);
+}
+
+// Комплексные тесты с комбинациями операций
+TEST_F(DevectorTest, ComplexInsertEraseSequence) {
+    devector<int> v;
+    
+    // Начальное заполнение
+    v.insert(v.end(), {1, 2, 3});
+    EXPECT_EQ(v.size(), 3);
+    
+    // Вставка в начало
+    v.insert(v.begin(), 5);
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(v[0], 5);
+    
+    // Вставка в середину
+    v.insert(v.begin() + 2, 99);
+    EXPECT_EQ(v.size(), 5);
+    EXPECT_EQ(v[2], 99);
+    
+    // Удаление из середины
+    v.erase(v.begin() + 2);
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(v[2], 2);
+    
+    // Удаление из начала
+    v.erase(v.begin());
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(v[0], 1);
+    
+    // Удаление из конца
+    v.erase(v.end() - 1);
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    
+    // Вставка диапазона
+    std::vector<int> new_elems = {3, 4, 5};
+    v.insert(v.end(), new_elems.begin(), new_elems.end());
+    EXPECT_EQ(v.size(), 5);
+    EXPECT_EQ(v[4], 5);
+}
+
+// Тесты с front_capacity и back_capacity
+TEST_F(DevectorTest, InsertWithFrontCapacity) {
+    devector<int> v(5, 0, reserve_only_tag_t{}); // front_capacity=5
+    for(int i = 1; i < 4; ++i){
+        v.push_back(i);
+    }
+
+    // Вставка в начало должна использовать front_capacity
+    v.insert(v.begin(), 0);
+    
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(v.front_free_capacity(), 19);
+    EXPECT_EQ(v[0], 0);
+    EXPECT_EQ(v[1], 1);
+    EXPECT_EQ(v[2], 2);
+    EXPECT_EQ(v[3], 3);
+}
+
+TEST_F(DevectorTest, InsertWithBackCapacity) {
+    devector<int> v(0, 5, reserve_only_tag_t{}); // back_capacity=5
+    for(int i = 1; i < 4; ++i){
+        v.push_back(i);
+    }
+    
+    // Вставка в конец должна использовать back_capacity
+    v.insert(v.end(), 4);
+    
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(v.back_free_capacity(), 1);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 2);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v[3], 4);
 }

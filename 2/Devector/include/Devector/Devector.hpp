@@ -279,36 +279,37 @@ public:
     size_type back_free_capacity() const noexcept{
         return capacity_ - (front_capacity_ + size_);
     }
-    // void resize(size_type new_size){
-    //     resize_back(new_size);
-    // }
-    // void resize(size_type new_size, const_reference value){
-    //     resize_back(new_size, value);
-    // }
-    // void resize_front(size_type new_size, const_reference value){
-    //     if (new_size < size_) {
-    //         erase(begin(), begin() + (size_ - new_size));
-    //         return;
-    //     }
-    //     insert(begin(), new_size - size_, value);
-    // }
-    // void resize_front(size_type new_size){
-    //     resize_front(new_size, value_type{});
-    // }
-    // void resize_back(size_type new_size, const_reference value){
-    //     if (new_size < size_) {
-    //         erase(begin() + (size_ - new_size), end());
-    //         return;
-    //     }
-    //     insert(begin() + size_, new_size - size_, value);
-    // }
-    // void resize_back(size_type new_size){
-    //     resize_back(new_size, value_type{});
-    // }
+    void resize(size_type new_size){
+        resize_back(new_size);
+    }
+    void resize(size_type new_size, const_reference value){
+        resize_back(new_size, value);
+    }
+    void resize_front(size_type new_size, const_reference value){
+        if (new_size < size_) {
+            erase(begin(), begin() + (size_ - new_size));
+            return;
+        }
+        insert(begin(), new_size - size_, value);
+    }
+    void resize_front(size_type new_size){
+        resize_front(new_size, value_type{});
+    }
+    void resize_back(size_type new_size, const_reference value){
+        if (new_size < size_) {
+            erase(begin() + new_size, end());
+            return;
+        }
+        insert(begin() + size_, new_size - size_, value);
+    }
+    void resize_back(size_type new_size){
+        resize_back(new_size, value_type{});
+    }
     void reserve(size_type new_capacity){
         reserve_back(new_capacity);
     }
     void reserve_front(size_type new_capacity){
+        if(new_capacity < size_){ return; }
         size_type n = new_capacity - size_;
         if(n <= front_capacity_){ return; }
         if (new_capacity > max_size()) {
@@ -316,13 +317,9 @@ public:
         }
         if(new_capacity <= capacity_){
             size_type shift = n - front_capacity_;
-            if constexpr (std::is_trivially_move_constructible_v<value_type> && std::is_trivially_destructible_v<value_type>) {
-                std::shift_right(arr_ + front_capacity_, arr_ + front_capacity_ + size_, shift);
-            } else {
-                for (size_type index = size_; index-- > 0;) {
-                    allocator_traits_type::construct(get_stored_allocator(), arr_ + front_capacity_ + index + shift, std::move_if_noexcept(arr_[front_capacity_ + index]));
-                    allocator_traits_type::destroy(get_stored_allocator(), arr_ + front_capacity_ + index);
-                }
+            for (size_type index = size_; index-- > 0;) {
+                allocator_traits_type::construct(get_stored_allocator(), arr_ + front_capacity_ + index + shift, std::move_if_noexcept(arr_[front_capacity_ + index]));
+                allocator_traits_type::destroy(get_stored_allocator(), arr_ + front_capacity_ + index);
             }
             front_capacity_ = n;
             return;
@@ -349,6 +346,7 @@ public:
         front_capacity_ = n;
     }
     void reserve_back(size_type new_capacity){
+        if(new_capacity < size_){ return; }
         size_type n = new_capacity - size_;
         if(n <= back_free_capacity()){ return; }
         if (new_capacity > max_size()) {
@@ -356,13 +354,9 @@ public:
         }
         if(new_capacity <= capacity_){
             size_type new_front_capacity = capacity_ - n - size_;
-            if constexpr (std::is_trivially_move_constructible_v<value_type> && std::is_trivially_destructible_v<value_type>) {
-                std::shift_left(arr_ + front_capacity_, arr_ + front_capacity_ + size_, n - back_free_capacity());
-            } else {
-                for(size_type index = 0; index < size_; ++index){
-                    allocator_traits_type::construct(get_stored_allocator(), arr_ + new_front_capacity + index, std::move_if_noexcept(arr_[front_capacity_ + index]));
-                    allocator_traits_type::destroy(get_stored_allocator(), arr_ + front_capacity_ + index);
-                }
+            for(size_type index = 0; index < size_; ++index){
+                allocator_traits_type::construct(get_stored_allocator(), arr_ + new_front_capacity + index, std::move_if_noexcept(arr_[front_capacity_ + index]));
+                allocator_traits_type::destroy(get_stored_allocator(), arr_ + front_capacity_ + index);
             }
             front_capacity_ = new_front_capacity;
             return;
@@ -411,7 +405,6 @@ public:
         capacity_ = size_;
         front_capacity_ = 0;
     }
-
     template<typename ... Args> void emplace_front(Args&& ... args){
         if(front_capacity_ == 0){
             reserve_front(capacity_ * 2 + 1);
@@ -448,6 +441,100 @@ public:
         allocator_traits_type::destroy(get_stored_allocator(), arr_ + front_capacity_ + size_ - 1);
         --size_;
     }
+    template<class... Args> 
+    iterator emplace(const_iterator position, Args&& ... args){
+        if(position == cbegin()){
+            emplace_front(std::forward<Args>(args)...);
+            return begin();
+        }
+        if(position == cend()){
+            emplace_back(std::forward<Args>(args)...);
+            return begin() + size_ - 1;
+        }
+        difference_type pos_from_begin = position - cbegin();
+        if(capacity_ == size_){
+            reserve(capacity_ * 2 + 1);
+            position = cbegin() + pos_from_begin;
+        }
+        if(back_free_capacity() > 0){
+            for (size_type i = size_; i-- > pos_from_begin;) {
+                allocator_traits_type::construct(get_stored_allocator(), arr_ + front_capacity_ + i + 1, std::move_if_noexcept(arr_[front_capacity_ + i]));
+                allocator_traits_type::destroy(get_stored_allocator(), arr_ + front_capacity_ + i);
+            }
+            allocator_traits_type::construct(get_stored_allocator(), arr_ + front_capacity_ + pos_from_begin, std::forward<Args>(args)...);
+            ++size_;
+            return begin() + pos_from_begin;
+        }
+        for(size_type i = 0; i < pos_from_begin; ++i){
+            allocator_traits_type::construct(get_stored_allocator(), arr_ + front_capacity_ + i - 1, std::move_if_noexcept(arr_[front_capacity_ + i]));
+            allocator_traits_type::destroy(get_stored_allocator(), arr_ + front_capacity_ + i);
+        }
+        allocator_traits_type::construct(get_stored_allocator(), arr_ + front_capacity_ - 1 + pos_from_begin, std::forward<Args>(args)...);
+        ++size_;
+        --front_capacity_;
+        return begin() + pos_from_begin;
+    }
+    iterator insert(const_iterator position, const_reference value){
+        return emplace(position, value);
+    }
+    iterator insert(const_iterator position, value_type&& value){
+        return emplace(position, std::move(value));
+    } 
+    iterator insert(const_iterator position, size_type n, const_reference value){
+        difference_type pos_from_begin = position - cbegin();
+        if(n == 0){ return begin() + pos_from_begin; }
+        reserve(size_ + n);
+        position = cbegin() + pos_from_begin;
+        for(size_type i = 0; i < n; ++i){
+            position = emplace(position, value);
+        }
+        return begin() + pos_from_begin;
+    }
+    template<typename InputIterator>
+    requires std::input_iterator<InputIterator>
+    iterator insert(const_iterator position, InputIterator first, InputIterator last){
+        difference_type pos_from_begin = position - cbegin();
+        if(first == last){ return begin() + pos_from_begin; }
+        if constexpr (std::is_base_of_v<std::forward_iterator_tag, typename std::iterator_traits<InputIterator>::iterator_category>){
+            reserve(size_ + std::distance(first, last));
+            position = cbegin() + pos_from_begin;
+        }
+        auto rb = std::reverse_iterator<InputIterator>(last);
+        auto re = std::reverse_iterator<InputIterator>(first);
+        for(; rb != re; ++rb){
+            position = emplace(position, *rb);
+        }
+        return begin() + pos_from_begin;
+    }
+    iterator insert(const_iterator position, std::initializer_list<T> il){
+        return insert(position, il.begin(), il.end());
+    }
+    iterator erase(const_iterator position){
+        difference_type pos_from_begin = position - cbegin();
+        allocator_traits_type::destroy(get_stored_allocator(), arr_ + front_capacity_ + pos_from_begin);
+        for(size_type i = pos_from_begin + 1; i < size_; ++i){
+            allocator_traits_type::construct(get_stored_allocator(), arr_ + front_capacity_ + i - 1, std::move_if_noexcept(arr_[front_capacity_ + i]));
+            allocator_traits_type::destroy(get_stored_allocator(), arr_ + front_capacity_ + i);
+        }
+        --size_;
+        return begin() + pos_from_begin;
+    }
+    iterator erase(const_iterator first, const_iterator last){
+        difference_type pos_from_begin = first - cbegin();
+        difference_type n = last - first;
+        for(size_type i = 0; i < n; ++i){
+            allocator_traits_type::destroy(get_stored_allocator(), arr_ + front_capacity_ + pos_from_begin + i);
+        }
+        for(size_type i = pos_from_begin + n; i < size_; ++i){
+            allocator_traits_type::construct(get_stored_allocator(), arr_ + front_capacity_ + i - n, std::move_if_noexcept(arr_[front_capacity_ + i]));
+            allocator_traits_type::destroy(get_stored_allocator(), arr_ + front_capacity_ + i);
+        }
+        size_ -= n;
+        return begin() + pos_from_begin;
+    }
+    iterator erase(iterator first, iterator last){
+        return erase(static_cast<const_iterator>(first), static_cast<const_iterator>(last));
+    }
 
     reference operator[](size_type index) noexcept{
         return arr_[front_capacity_ + index];
@@ -481,14 +568,12 @@ public:
     const_pointer data() const noexcept{
         return arr_ + front_capacity_;
     }
-
     void swap_resources(devector& other) noexcept{
         std::swap(arr_, other.arr_);
         std::swap(size_, other.size_);
         std::swap(capacity_, other.capacity_);
         std::swap(front_capacity_, other.front_capacity_);
     }
-
     void swap(devector& other) noexcept(propagate_on_container_swap::value || is_always_equal::value){
         if constexpr (propagate_on_container_swap::value){
             std::swap(get_stored_allocator(), other.get_stored_allocator());
@@ -500,7 +585,6 @@ public:
         }
         swap_resources(other);
     }
-
     void clear() noexcept{
         destroy_n(size_);
         size_ = 0;
