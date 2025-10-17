@@ -588,7 +588,6 @@ public:
     void clear() noexcept{
         destroy_n(size_);
         size_ = 0;
-        front_capacity_ = 0;
     }
 };
 
