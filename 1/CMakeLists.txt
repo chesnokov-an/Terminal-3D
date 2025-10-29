@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.16)
+project(Lab1)
+
+add_subdirectory(Main)
+add_subdirectory(Matrix)
+add_subdirectory(Polyline)
+add_subdirectory(Buffer)
+add_subdirectory(Dialogue)
+add_subdirectory(Utils)
+add_subdirectory(Tests)

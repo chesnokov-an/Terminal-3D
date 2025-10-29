@@ -1,0 +1,42 @@
+# Основные настройки проекта
+PROJECT_NAME           = "Графическая Библиотека"
+PROJECT_NUMBER         = 1.0
+PROJECT_BRIEF          = "Библиотека для работы с графическими примитивами"
+PROJECT_LOGO           = 
+OUTPUT_DIRECTORY       = ./docs
+
+# Настройки входных файлов
+INPUT                  = . \
+                         Buffer/include/Buffer/Buffer.h \
+                         Matrix/include/Matrix/Matrix.h \
+                         Polyline/include/Polyline/Polyline.h
+INPUT_ENCODING         = UTF-8
+FILE_PATTERNS          = *.h *.hpp *.cpp *.c *.md
+RECURSIVE              = YES
+EXCLUDE                = build/ \
+                         Dialogue/ \
+                         Tests/ \
+                         CMakeLists.txt \
+                         Doxyfile
+EXCLUDE_PATTERNS       = */CMakeLists.txt \
+                         */main.cpp \
+                         */TestCase.cpp \
+                         */build/* \
+                         */.git/*
+USE_MDFILE_AS_MAINPAGE = ./README.md
+
+# Настройки извлечения документации
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = NO
+EXTRACT_LOCAL_CLASSES  = YES
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+
+# HTML настройки
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_DYNAMIC_SECTIONS  = NO
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+USE_INLINE_TREES       = NO
